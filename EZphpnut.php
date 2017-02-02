@@ -1,19 +1,19 @@
 <?php
 /**
- * EZAppDotNet.php
+ * EZphpnut.php
  * Class for easy web development
- * https://github.com/jdolitsky/AppDotNetPHP
+ * https://github.com/pnut-api/phpnut
  *
  * This class does as much of the grunt work as possible in helping you to
- * access the App.net API. In theory you don't need to know anything about
+ * access the pnut.io API. In theory you don't need to know anything about
  * oAuth, tokens, or all the ugly details of how it works, it should "just
  * work". 
  *
  * Note this class assumes you're running a web site, and you'll be 
  * accessing it via a web browser (it expects to be able to do things like
- * cookies and sessions). If you're not using a web browser in your App.net
+ * cookies and sessions). If you're not using a web browser in your pnut.io
  * application, or you want more fine grained control over what's being
- * done for you, use the included AppDotNet class, which does much
+ * done for you, use the included phpnut class, which does much
  * less automatically.
  */
 
@@ -22,15 +22,15 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once 'EZsettings.php';
-require_once 'AppDotNet.php';
+require_once 'phpnut.php';
 
 // comment this out if session is started elsewhere
 session_start();
 
-class EZAppDotNet extends AppDotNet {
+class EZphpnut extends phpnut {
 
-	private $_callbacks = array();
-	private $_autoShutdownStreams = array();
+	private $_callbacks = [];
+	private $_autoShutdownStreams = [];
 
 	public function __construct($clientId=null,$clientSecret=null) {
 		global $app_clientId,$app_clientSecret;
@@ -40,7 +40,7 @@ class EZAppDotNet extends AppDotNet {
 
 			// if it's still the default, warn them
 			if ($app_clientId == 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') {
-				throw new AppDotNetException('You must change the values defined in EZsettings.php');
+				throw new phpnutException('You must change the values defined in EZsettings.php');
 			}
 
 			$clientId = $app_clientId;
@@ -51,10 +51,10 @@ class EZAppDotNet extends AppDotNet {
 		parent::__construct($clientId,$clientSecret);
 
 		// set up ez streaming
-		$this->registerStreamFunction(array($this,'streamEZCallback'));
+		$this->registerStreamFunction([$this,'streamEZCallback']);
 
 		// make sure we cleanup/destroy any streams when we exit
-		register_shutdown_function(array($this,'stopStreaming'));
+		register_shutdown_function([$this,'stopStreaming']);
 	}
 
 	public function getAuthUrl($redirectUri=null,$scope=null) {
@@ -87,12 +87,12 @@ class EZAppDotNet extends AppDotNet {
 			$token = $this->getSession();
 		}
 
-		$_SESSION['AppDotNetPHPAccessToken']=$token;
+		$_SESSION['phpnutAccessToken']=$token;
 
 		// if they want to stay logged in via a cookie, set the cookie
 		if ($token && $cookie) {
 			$cookie_lifetime = time()+(60*60*24*7);
-			setcookie('AppDotNetPHPAccessToken',$token,$cookie_lifetime);
+			setcookie('phpnutAccessToken',$token,$cookie_lifetime);
 		}
 
 		return $token;
@@ -102,15 +102,15 @@ class EZAppDotNet extends AppDotNet {
 	public function getSession() {
 
 		// first check for cookie
-		if (isset($_COOKIE['AppDotNetPHPAccessToken']) && $_COOKIE['AppDotNetPHPAccessToken'] != 'expired') {
-			$this->setAccessToken($_COOKIE['AppDotNetPHPAccessToken']);
-			return $_COOKIE['AppDotNetPHPAccessToken'];
+		if (isset($_COOKIE['phpnutAccessToken']) && $_COOKIE['phpnutAccessToken'] != 'expired') {
+			$this->setAccessToken($_COOKIE['phpnutAccessToken']);
+			return $_COOKIE['phpnutAccessToken'];
 		}
 
 		// else check the session for the token (from a previous page load)
-		else if (isset($_SESSION['AppDotNetPHPAccessToken'])) {
-			$this->setAccessToken($_SESSION['AppDotNetPHPAccessToken']);
-			return $_SESSION['AppDotNetPHPAccessToken'];
+		else if (isset($_SESSION['phpnutAccessToken'])) {
+			$this->setAccessToken($_SESSION['phpnutAccessToken']);
+			return $_SESSION['phpnutAccessToken'];
 		}
 
 		return false;
@@ -119,10 +119,10 @@ class EZAppDotNet extends AppDotNet {
 	// log the user out
 	public function deleteSession() {
 		// clear the session
-		unset($_SESSION['AppDotNetPHPAccessToken']);
+		unset($_SESSION['phpnutAccessToken']);
 
 		// unset the cookie
-		setcookie('AppDotNetPHPAccessToken', null, 1);
+		setcookie('phpnutAccessToken', null, 1);
 
 		// clear the access token
 		$this->setAccessToken(null);
@@ -133,8 +133,8 @@ class EZAppDotNet extends AppDotNet {
 
 	/**
 	 * Registers a callback function to be called whenever an event of a certain
-	 * type is received from the app.net streaming API. Your function will recieve
-	 * a PHP associative array containing an app.net object. You must register at
+	 * type is received from the pnut.io streaming API. Your function will recieve
+	 * a PHP associative array containing a pnut.io object. You must register at
 	 * least one callback function before starting to stream (otherwise your data
 	 * would simply be discarded). You can register multiple event types and even 
 	 * multiple functions per event (just call this method as many times as needed).
@@ -147,21 +147,21 @@ class EZAppDotNet extends AppDotNet {
 	 * drop the data into a file or database to be collected and processed by
 	 * another program.
 	 * @param string $type The type of even your callback would like to recieve.
-	 * At time of writing the possible options are 'post', 'star', 'user_follow'.
+	 * At time of writing the possible options are 'post', 'bookmark', 'user_follow'.
 	 */
 	public function registerStreamCallback($type,$callback) {
 		switch ($type) {
 			case 'post':
-			case 'star':
+			case 'bookmark':
 			case 'user_follow':
 				if (!array_key_exists($type,$this->_callbacks)) {
-					$this->_callbacks[$type] = array();
+					$this->_callbacks[$type] = [];
 				}
 				$this->_callbacks[$type][] = $callback;
 				return true;
 				break;
 			default:
-				throw new AppDotNetException('Unknown callback type: '.$type);
+				throw new phpnutException('Unknown callback type: '.$type);
 		}
 	}
 
@@ -176,18 +176,18 @@ class EZAppDotNet extends AppDotNet {
 	 * processes or multiple servers, since the first script that exits/crashes will
 	 * delete the streams for everyone else. Instead use createStream() and openStream().
 	 * @return true
-	 * @see AppDotNetStream::stopStreaming()
-	 * @see AppDotNetStream::createStream()
-	 * @see AppDotNetStream::openStream()
+	 * @see phpnutStream::stopStreaming()
+	 * @see phpnutStream::createStream()
+	 * @see phpnutStream::openStream()
 	 */
 	public function startStreaming() {
 		// only listen for object types that we have registered callbacks for
 		if (!$this->_callbacks) {
-			throw new AppDotNetException('You must register at least one callback function before calling startStreaming');
+			throw new phpnutException('You must register at least one callback function before calling startStreaming');
 		}
 		// if there's already a stream running, don't allow another
 		if ($this->_currentStream) {
-			throw new AppDotNetException('There is already a stream being consumed, only one stream can be consumed per AppDotNetStream instance');
+			throw new phpnutException('There is already a stream being consumed, only one stream can be consumed per phpnutStream instance');
 		}
 		$stream = $this->createStream(array_keys($this->_callbacks));
 		// when the script exits, delete this stream (if it's still around)
@@ -206,9 +206,9 @@ class EZAppDotNet extends AppDotNet {
 	 * processes or multiple servers, since it will delete the streams for everyone 
 	 * else. Instead use closeStream().
 	 * @return true
-	 * @see AppDotNetStream::startStreaming()
-	 * @see AppDotNetStream::deleteStream()
-	 * @see AppDotNetStream::closeStream()
+	 * @see phpnutStream::startStreaming()
+	 * @see phpnutStream::deleteStream()
+	 * @see phpnutStream::closeStream()
 	 */
 	public function stopStreaming() {
 		$this->closeStream();

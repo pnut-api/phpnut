@@ -1,16 +1,11 @@
-AppDotNetPHP
+phpnutPHP
 ============
 
-PHP library for the App.net Stream API
+PHP library for the pnut.io Stream API
 
-More info on the App.net Stream API <a target="_blank" href="https://github.com/appdotnet/api-spec">here</a>
+More info on the pnut.io Stream API <a target="_blank" href="https://github.com/pnut-api/api-spec">here</a>
 
-Find more App.net code libraries and examples <a target="_blank" href="https://github.com/appdotnet/api-spec/wiki/Developer-Resources">here</a>
-
-Sign up for App.net <a target="_blank" href="https://join.app.net/">here</a>
-
-NOTE:<br>
-The Stream API is currently under development. This library will be rapidly changing in accordance with changes made in the API.
+## Note that this is untested, missing some endpoints, and contains stream endpoint instructions that are not currently valid with pnut.io's API.
 
 **Contributors:**
 * <a href="https://alpha.app.net/jdolitsky" target="_blank">@jdolitsky</a>
@@ -22,21 +17,17 @@ The Stream API is currently under development. This library will be rapidly chan
 * <a href="https://alpha.app.net/cdn" target="_blank">@cdn</a>
 * <a href="https://alpha.app.net/ryantharp" target="_blank">@ryantharp</a>
 
-WARNING:
----------
-This version breaks a lot of backward compatibility with the previous version, in order to be more flexible with the rapidly evolving API. YOU WILL HAVE TO MAKE CHANGES TO YOUR CODE WHEN YOU UPGRADE.
-
 Usage:
 --------
-###EZAppDotNet
+###EZphpnut
 If you are planning to design an app for viewing within a browser that requires a login screen etc, this is a great place to start. This aims to hide all the nasty authentication stuff from the average developer. It is also recommended that you start here if you have never worked with OAuth and/or APIs before.
 
 ```php
 <?php
 
-require_once 'EZAppDotNet.php';
+require_once 'EZphpnut.php';
 
-$app = new EZAppDotNet();
+$app = new EZphpnut();
 
 // check that the user is signed in
 if ($app->getSession()) {
@@ -60,26 +51,26 @@ if ($app->getSession()) {
 
 ?>
 ```
-To view a full example in action, you should copy the project files into your webroot directory. Edit the values in **EZsettings.php** to reflect the ones for your app (to make things easy, change the Callback URL within your app.net developers console to http://localhost/ez-example/callback.php). Add or remove values from the $app_scope array to change the permissions your app will have with the authenticated user. Travel to http://localhost/ez-example/ and click 'Sign in with App.net'.
+To view a full example in action, you should copy the project files into your webroot directory. Edit the values in **EZsettings.php** to reflect the ones for your app (to make things easy, change the Callback URL within your app.net developers console to http://localhost/ez-example/callback.php). Add or remove values from the $app_scope array to change the permissions your app will have with the authenticated user. Travel to http://localhost/ez-example/ and click 'Sign in with pnut.io'.
 
-###AppDotNet
+###phpnut
 Use this class if you need more control of your application (such as running a command line process) or are integrating your code with an existing application that handles sessions/cookies in a different way.
 
 First construct your authentication url.
 ```php
 <?php
 
-require_once 'AppDotNet.php';
+require_once 'phpnut.php';
 
 // change these to your app's values
 $clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
-// construct the AppDotNet object
-$app = new AppDotNet($clientId,$clientSecret);
+// construct the phpnut object
+$app = new phpnut($clientId,$clientSecret);
 
 $redirectUri  = 'http://localhost/callback.php';
-$scope        =  array('stream','email','write_post','follow','messages','update_profile','files','export');
+$scope        =  array('stream','email','write_post','follow','messages','update_profile','presence');
 
 // create an authentication Url
 $url = $app->getAuthUrl($redirectUri,$scope);
@@ -89,8 +80,8 @@ $url = $app->getAuthUrl($redirectUri,$scope);
 Once the user has authenticated the app, grab the token in the callback script, and get information about the user.
 ```php
 <?php
-require_once 'AppDotNet.php';
-$app = new AppDotNet($clientId,$clientSecret);
+require_once 'phpnut.php';
+$app = new phpnut($clientId,$clientSecret);
 
 // get the token returned by App.net
 // (this also sets the token)
@@ -120,8 +111,8 @@ To consume the stream, try something like:
 ```php
 <?php
 
-require_once 'AppDotNet.php';
-$app = new AppDotNet($clientId,$clientSecret);
+require_once 'phpnut.php';
+$app = new phpnut($clientId,$clientSecret);
 
 // You need an app token to consume the stream, get the token returned by App.net
 // (this also sets the token)

@@ -1,8 +1,8 @@
 <?php
 
-require_once '../EZAppDotNet.php';
+require_once '../EZphpnut.php';
 
-$app = new EZAppDotNet();
+$app = new EZphpnut();
 
 // log in user
 // if 'Remember me' was checked...
