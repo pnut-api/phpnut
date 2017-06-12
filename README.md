@@ -5,17 +5,16 @@ PHP library for the pnut.io Stream API
 
 More info on the pnut.io Stream API <a target="_blank" href="https://github.com/pnut-api/api-spec">here</a>
 
-## Note that this is untested, missing some endpoints, and contains stream endpoint instructions that are not currently valid with pnut.io's API.
-
 **Contributors:**
 * <a href="https://alpha.app.net/jdolitsky" target="_blank">@jdolitsky</a>
-* <a href="https://alpha.app.net/ravisorg" target="_blank">@ravisorg</a>
+* <a href="https://pnut.io/@ravisorg" target="_blank">@ravisorg</a>
 * <a href="https://github.com/wpstudio" target="_blank">@wpstudio</a>
 * <a href="https://alpha.app.net/harold" target="_blank">@harold</a>
 * <a href="https://alpha.app.net/hxf148" target="_blank">@hxf148</a>
 * <a href="https://alpha.app.net/edent" target="_blank">@edent</a>
-* <a href="https://alpha.app.net/cdn" target="_blank">@cdn</a>
-* <a href="https://alpha.app.net/ryantharp" target="_blank">@ryantharp</a>
+* <a href="https://pnut.io/@c" target="_blank">@cdn</a>
+* <a href="https://pnut.io/@ryantharp" target="_blank">@ryantharp</a>
+* <a href="https://pnut.io/@33mhz" target="_blank">@33MHz</a>
 
 Usage:
 --------

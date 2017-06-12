@@ -184,7 +184,7 @@ class phpnut {
             ];
 
             // try and fetch the token with the above data
-            $res = $this->httpReq('post',$this->_authUrl.'access_token', $data);
+            $res = $this->httpReq('post',$this->_baseUrl.'oauth/access_token', $data);
 
             // store it for later
             $this->_accessToken = $res['access_token'];
@@ -243,6 +243,32 @@ class phpnut {
     public function deauthorizeToken() {
         return $this->httpReq('delete',$this->_baseUrl.'token');
     }
+    
+    /**
+	 * Retrieve an app access token from the app.net API. This allows you
+	 * to access the API without going through the user access flow if you
+	 * just want to (eg) consume global. App access tokens are required for
+	 * some actions (like streaming global). DO NOT share the return value
+	 * of this function with any user (or save it in a cookie, etc). This
+	 * is considered secret info for your app only.
+	 * @return string The app access token
+	 */
+	public function getAppAccessToken() {
+		// construct the necessary elements to get a token
+		$data = [
+			'client_id'=>$this->_clientId,
+			'client_secret'=>$this->_clientSecret,
+			'grant_type'=>'client_credentials',
+		];
+		// try and fetch the token with the above data
+		$res = $this->httpReq('post',$this->_authUrl.'access_token', $data);
+		// store it for later
+		$this->_appAccessToken = $res['access_token'];
+		$this->_accessToken = $res['access_token'];
+		$this->_username = null;
+		$this->_user_id = null;
+		return $this->_accessToken;
+	}
 
     /**
      * Returns the total number of requests you're allowed within the
@@ -789,7 +815,7 @@ class phpnut {
     * This will likely change as the API evolves, as of this writing allowed keys
     * are:    count, before_id, since_id, include_muted, include_deleted,
     * and include_post_raw.
-    * See https://github.com/appdotnet/api-spec/blob/master/resources/posts.md#general-parameters
+    * See https://github.com/phpnut/api-spec/blob/master/resources/posts.md#general-parameters
     * @return array An array of associative arrays, each representing a single
     * user who has bookmarked a post
     */
@@ -1022,6 +1048,340 @@ class phpnut {
     public function deleteMessage($channelid,$messageid) {
         return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid);
     }
+    
+    /**
+	 * Get Application Information
+	 */
+	public function getAppTokenInfo() {
+		// requires appAccessToken
+		if (!$this->_appAccessToken) {
+			$this->getAppAccessToken();
+		}
+		// ensure request is made with our appAccessToken
+		$params['access_token']=$this->_appAccessToken;
+		return $this->httpReq('get',$this->_baseUrl.'token',$params);
+	}
+    
+	/**
+	 * Get User Information
+	 */
+	public function getUserTokenInfo() {
+		return $this->httpReq('get',$this->_baseUrl.'token');
+	}
+    
+	/**
+	 * Get Application Authorized User IDs
+	 */
+	public function getAppUserIDs() {
+		// requires appAccessToken
+		if (!$this->_appAccessToken) {
+			$this->getAppAccessToken();
+		}
+		// ensure request is made with our appAccessToken
+		$params['access_token']=$this->_appAccessToken;
+		return $this->httpReq('get',$this->_baseUrl.'apps/me/users/ids',$params);
+	}
+    
+	/**
+	 * Get Application Authorized User Tokens
+	 */
+	public function getAppUserTokens() {
+		// requires appAccessToken
+		if (!$this->_appAccessToken) {
+			$this->getAppAccessToken();
+		}
+		// ensure request is made with our appAccessToken
+		$params['access_token']=$this->_appAccessToken;
+		return $this->httpReq('get',$this->_baseUrl.'apps/me/users/tokens',$params);
+	}
+    
+    /**
+	 * Registers your function (or an array of object and method) to be called
+	 * whenever an event is received via an open pnut.io stream. Your function
+	 * will receive a single parameter, which is the object wrapper containing
+	 * the meta and data.
+	 * @param mixed A PHP callback (either a string containing the function name,
+	 * or an array where the first element is the class/object and the second
+	 * is the method).
+	 */
+	public function registerStreamFunction($function) {
+		$this->_streamCallback = $function;
+	}
+    
+	/**
+	 * Opens a stream that's been created for this user/app and starts sending
+	 * events/objects to your defined callback functions. You must define at
+	 * least one callback function before opening a stream.
+	 * @param mixed $stream Either a stream ID or the endpoint of a stream
+	 * you've already created. This stream must exist and must be valid for
+	 * your current access token. If you pass a stream ID, the library will
+	 * make an API call to get the endpoint.
+	 *
+	 * This function will return immediately, but your callback functions
+	 * will continue to receive events until you call closeStream() or until
+	 * pnut.io terminates the stream from their end with an error.
+	 *
+	 * If you're disconnected due to a network error, the library will
+	 * automatically attempt to reconnect you to the same stream, no action
+	 * on your part is necessary for this. However if the pnut.io API returns
+	 * an error, a reconnection attempt will not be made.
+	 *
+	 * Note there is no closeStream, because once you open a stream you
+	 * can't stop it (unless you exit() or die() or throw an uncaught
+	 * exception, or something else that terminates the script).
+	 * @return boolean True
+	 * @see createStream()
+	 */
+	public function openStream($stream) {
+		// if there's already a stream running, don't allow another
+		if ($this->_currentStream) {
+			throw new phpnutException('There is already a stream being consumed, only one stream can be consumed per phpnutStream instance');
+		}
+		// must register a callback (or the exercise is pointless)
+		if (!$this->_streamCallback) {
+			throw new phpnutException('You must define your callback function using registerStreamFunction() before calling openStream');
+		}
+		// if the stream is a numeric value, get the stream info from the api
+		if (is_numeric($stream)) {
+			$stream = $this->getStream($stream);
+			$this->_streamUrl = $stream['endpoint'];
+		}
+		else {
+			$this->_streamUrl = $stream;
+		}
+		// continue doing this until we get an error back or something...?
+		$this->httpStream('get',$this->_streamUrl);
+		return true;
+	}
+    
+	/**
+	 * Close the currently open stream.
+	 * @return true;
+	 */
+	public function closeStream() {
+		if (!$this->_lastStreamActivity) {
+			// never opened
+			return;
+		}
+		if (!$this->_multiStream) {
+			throw new phpnutException('You must open a stream before calling closeStream()');
+		}
+		curl_close($this->_currentStream);
+		curl_multi_remove_handle($this->_multiStream,$this->_currentStream);
+		curl_multi_close($this->_multiStream);
+		$this->_currentStream = null;
+		$this->_multiStream = null;
+	}
+    
+	/**
+	 * Retrieve all streams for the current access token.
+	 * @return array An array of stream definitions.
+	 */
+	public function getAllStreams() {
+		return $this->httpReq('get',$this->_baseUrl.'streams');
+	}
+    
+	/**
+	 * Returns a single stream specified by a stream ID. The stream must have been
+	 * created with the current access token.
+	 * @return array A stream definition
+	 */
+	public function getStream($streamId) {
+		return $this->httpReq('get',$this->_baseUrl.'streams/'.urlencode($streamId));
+	}
+    
+	/**
+	 * Creates a stream for the current app access token.
+	 *
+	 * @param array $objectTypes The objects you want to retrieve data for from the
+	 * stream. At time of writing these can be 'post', 'bookmark', 'user_follow', 'mute', 'block', 'stream_marker', 'message', 'channel', 'channel_subscription', 'token', and/or 'user'.
+	 * If you don't specify, a few standard events will be retrieved.
+	 */
+	public function createStream($objectTypes=null) {
+		// default object types to everything
+		if (is_null($objectTypes)) {
+			$objectTypes = ['post','bookmark','user_follow'];
+		}
+		$data = [
+			'object_types'=>$objectTypes,
+			'type'=>'long_poll',
+		];
+		$data = json_encode($data);
+		$response = $this->httpReq('post',$this->_baseUrl.'streams',$data,'application/json');
+		return $response;
+	}
+    
+	/**
+	 * Update stream for the current app access token
+	 *
+	 * @param integer $streamId The stream ID to update. This stream must have been
+	 * created by the current access token.
+	 * @param array $data allows object_types, type, filter_id and key to be updated. filter_id/key can be omitted
+	 */
+	public function updateStream($streamId,$data) {
+		// objectTypes is likely required
+		if (is_null($data['object_types'])) {
+			$data['object_types'] = ['post','bookmark','user_follow'];
+		}
+		// type can still only be long_poll
+		if (is_null($data['type'])) {
+			$data['type']='long_poll';
+		}
+		$data = json_encode($data);
+		$response = $this->httpReq('put',$this->_baseUrl.'streams/'.urlencode($streamId),$data,'application/json');
+		return $response;
+	}
+     
+	/**
+	 * Deletes a stream if you no longer need it.
+	 *
+	 * @param integer $streamId The stream ID to delete. This stream must have been
+	 * created by the current access token.
+	 */
+	public function deleteStream($streamId) {
+		return $this->httpReq('delete',$this->_baseUrl.'streams/'.urlencode($streamId));
+	}
+    
+	/**
+	 * Deletes all streams created by the current access token.
+	 */
+	public function deleteAllStreams() {
+		return $this->httpReq('delete',$this->_baseUrl.'streams');
+	}
+    
+	/**
+	 * Internal function used to process incoming chunks from the stream. This is only
+	 * public because it needs to be accessed by CURL. Do not call or use this function
+	 * in your own code.
+	 * @ignore
+	 */
+	public function httpStreamReceive($ch,$data) {
+		$this->_lastStreamActivity = time();
+		$this->_streamBuffer .= $data;
+		if (!$this->_streamHeaders) {
+			$pos = strpos($this->_streamBuffer,"\r\n\r\n");
+			if ($pos!==false) {
+				$this->_streamHeaders = substr($this->_streamBuffer,0,$pos);
+				$this->_streamBuffer = substr($this->_streamBuffer,$pos+4);
+			}
+		}
+		else {
+			$pos = strpos($this->_streamBuffer,"\r\n");
+			while ($pos!==false) {
+				$command = substr($this->_streamBuffer,0,$pos);
+				$this->_streamBuffer = substr($this->_streamBuffer,$pos+2);
+				$command = json_decode($command,true);
+				if ($command) {
+					call_user_func($this->_streamCallback,$command);
+				}
+				$pos = strpos($this->_streamBuffer,"\r\n");
+			}
+		}
+		return strlen($data);
+	}
+    
+	/**
+	 * Opens a long lived HTTP connection to the pnut.io servers, and sends data
+	 * received to the httpStreamReceive function. As a general rule you should not
+	 * directly call this method, it's used by openStream().
+	 */
+	protected function httpStream($act, $req, $params=array(),$contentType='application/x-www-form-urlencoded') {
+		if ($this->_currentStream) {
+			throw new phpnutException('There is already an open stream, you must close the existing one before opening a new one');
+		}
+		$headers = array();
+		$this->_streamBuffer = '';
+		if ($this->_accessToken) {
+			$headers[] = 'Authorization: Bearer '.$this->_accessToken;
+		}
+		$this->_currentStream = curl_init($req);
+		curl_setopt($this->_currentStream, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($this->_currentStream, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($this->_currentStream, CURLINFO_HEADER_OUT, true);
+		curl_setopt($this->_currentStream, CURLOPT_HEADER, true);
+		if ($this->_sslCA) {
+			curl_setopt($this->_currentStream, CURLOPT_CAINFO, $this->_sslCA);
+		}
+		// every time we receive a chunk of data, forward it to httpStreamReceive
+		curl_setopt($this->_currentStream, CURLOPT_WRITEFUNCTION, array($this, "httpStreamReceive"));
+		// curl_exec($ch);
+		// return;
+		$this->_multiStream = curl_multi_init();
+		$this->_lastStreamActivity = time();
+		curl_multi_add_handle($this->_multiStream,$this->_currentStream);
+	}
+    
+	public function reconnectStream() {
+		$this->closeStream();
+		$this->_connectFailCounter++;
+		// if we've failed a few times, back off
+		if ($this->_connectFailCounter>1) {
+			$sleepTime = pow(2,$this->_connectFailCounter);
+			// don't sleep more than 60 seconds
+			if ($sleepTime>60) {
+				$sleepTime = 60;
+			}
+			sleep($sleepTime);
+		}
+		$this->httpStream('get',$this->_streamUrl);
+	}
+    
+	/**
+	 * Process an open stream for x microseconds, then return. This is useful if you want
+	 * to be doing other things while processing the stream. If you just want to
+	 * consume the stream without other actions, you can call processForever() instead.
+	 * @param float @microseconds The number of microseconds to process for before
+	 * returning. There are 1,000,000 microseconds in a second.
+	 *
+	 * @return void
+	 */
+	public function processStream($microseconds=null) {
+		if (!$this->_multiStream) {
+			throw new phpnutException('You must open a stream before calling processStream()');
+		}
+		$start = microtime(true);
+		$active = null;
+		$inQueue = null;
+		$sleepFor = 0;
+		do {
+			// if we haven't received anything within 5.5 minutes, reconnect
+			// keepalives are sent every 5 minutes (measured on 2013-3-12 by @ryantharp)
+			if (time()-$this->_lastStreamActivity>=330) {
+				$this->reconnectStream();
+			}
+			curl_multi_exec($this->_multiStream, $active);
+			if (!$active) {
+				$httpCode = curl_getinfo($this->_currentStream,CURLINFO_HTTP_CODE);
+				// don't reconnect on 400 errors
+				if ($httpCode>=400 && $httpCode<=499) {
+					throw new phpnutException('Received HTTP error '.$httpCode.' check your URL and credentials before reconnecting');
+				}
+				$this->reconnectStream();
+			}
+			// sleep for a max of 2/10 of a second
+			$timeSoFar = (microtime(true)-$start)*1000000;
+			$sleepFor = $this->streamingSleepFor;
+			if ($timeSoFar+$sleepFor>$microseconds) {
+				$sleepFor = $microseconds - $timeSoFar;
+			}
+			if ($sleepFor>0) {
+				usleep($sleepFor);
+			}
+		} while ($timeSoFar+$sleepFor<$microseconds);
+	}
+    
+	/**
+	 * Process an open stream forever. This function will never return, if you
+	 * want to perform other actions while consuming the stream, you should use
+	 * processFor() instead.
+	 * @return void This function will never return
+	 * @see processFor();
+	 */
+	public function processStreamForever() {
+		while (true) {
+			$this->processStream(600);
+		}
+	}
 
     public function getLastRequest() {
         return $this->_last_request;

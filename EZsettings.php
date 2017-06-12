@@ -19,5 +19,6 @@ $app_scope        =  [
 	// 'public_messages', // Send and receive public messages as this user
 	// 'messages', // Send and receive public and private messages as this user
 	// 'update_profile', // Update a user’s name, images, and other profile information
+    // 'files', //  Manage a user’s files. This is not needed for uploading files.
     // 'presence', // Get and set a user's presence
 ];
