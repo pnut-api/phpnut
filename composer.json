@@ -1,0 +1,21 @@
+{
+    "name": "pnut-api/phpnut",
+    "description": "Pnut API library",
+    "keywords": ["library", "pnut"],
+    "homepage": "https://github.com/pnut-api/phpnut",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "33MHz",
+            "email": "support@pnut.io",
+            "homepage": "https://pnut.io/@33mhz"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0"
+    },
+    "autoload": {
+        "psr-0": {"phpnut": ""}
+    }
+}
