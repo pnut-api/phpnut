@@ -892,7 +892,7 @@ class phpnut {
     * @param array $params An associative array of optional general parameters.
     * This will likely change as the API evolves, as of this writing allowed keys
     * are: count, before_id, since_id, include_muted, include_deleted,
-    * include_directed_posts, and include_annotations.
+    * include_directed_posts, and include_raw.
     * @return An array of associative arrays, each representing a single post.
     */
     public function getUserUnifiedStream($params = []) {
@@ -1388,6 +1388,164 @@ class phpnut {
     }
     public function getLastResponse() {
         return $this->_last_response;
+    }
+
+    /**
+     * Upload a file to a user's file store
+     * @param string $file A string containing the path of the file to upload.
+     * @param array $data Additional data about the file you're uploading. At the
+     * moment accepted keys are: mime-type, kind, type, name, public and raw.
+     * - If you don't specify mime-type, phpnut will attempt to guess the mime type
+     * based on the file, however this isn't always reliable.
+     * - If you don't specify kind phpnut will attempt to determine if the file is
+     * an image or not.
+     * - If you don't specify name, phpnut will use the filename of the first
+     * parameter.
+     * - If you don't specify public, your file will be uploaded as a private file.
+     * - Type is REQUIRED.
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: include_raw|include_file_raw.
+     * @return array An associative array representing the file
+     */
+    public function createFile($file, $data, $params=[]) {
+        if (!$file) {
+            throw new PhpnutException('You must specify a path to a file');
+        }
+        if (!file_exists($file)) {
+            throw new PhpnutException('File path specified does not exist');
+        }
+        if (!is_readable($file)) {
+            throw new PhpnutException('File path specified is not readable');
+        }
+        if (!$data) {
+            $data = [];
+        }
+        if (!array_key_exists('type',$data) || !$data['type']) {
+            throw new PhpnutException('Type is required when creating a file');
+        }
+        if (!array_key_exists('name',$data)) {
+            $data['name'] = basename($file);
+        }
+        if (array_key_exists('mime-type',$data)) {
+            $mimeType = $data['mime-type'];
+            unset($data['mime-type']);
+        } else {
+            $mimeType = null;
+        }
+        if (!array_key_exists('kind',$data)) {
+            $test = @getimagesize($path);
+            if ($test && array_key_exists('mime',$test)) {
+                $data['kind'] = 'image';
+                if (!$mimeType) {
+                    $mimeType = $test['mime'];
+                }
+            }
+            else {
+                $data['kind'] = 'other';
+            }
+        }
+        if (!$mimeType) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file);
+            finfo_close($finfo);
+        }
+        if (!$mimeType) {
+            throw new PhpnutException('Unable to determine mime type of file, try specifying it explicitly');
+        }
+        if (!array_key_exists('public',$data) || !$data['is_public']) {
+            $public = false;
+        } else {
+            $public = true;
+        }
+        $data['content'] = new CurlFile($file, $mimeType);
+        return $this->httpReq('post-raw',$this->_baseUrl.'files', $data, 'multipart/form-data');
+    }
+
+    public function createFilePlaceholder($file = null, $params=[]) {
+        $name = basename($file);
+        $data = ['raw' => $params['raw'], 'kind' => $params['kind'], 'name' => $name, 'type' => $params['metadata']];
+        $json = json_encode($data);
+        return $this->httpReq('post',$this->_baseUrl.'files', $json, 'application/json');
+    }
+
+    public function updateFileContent($fileid, $file) {
+        $data = file_get_contents($file);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file);
+        finfo_close($finfo);
+        return $this->httpReq('put',$this->_baseUrl.'files/'.$fileid.'/content', $data, $mime);
+    }
+
+    /**
+     * Allows for file rename and annotation changes.
+     * @param integer $file_id The ID of the file to update
+     * @param array $params An associative array of file parameters.
+     * @return array An associative array representing the updated file
+    */
+    public function updateFile($file_id=null, $params=[]) {
+        $data = ['raw' => $params['raw'] , 'name' => $params['name']];
+        $json = json_encode($data);
+        return $this->httpReq('put',$this->_baseUrl.'files/'.urlencode($file_id), $json, 'application/json');
+    }
+
+    /**
+     * Returns a specific File.
+     * @param integer $file_id The ID of the file to retrieve
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: include_raw|include_file_raw.
+     * @return array An associative array representing the file
+     */
+    public function getFile($file_id=null, $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'files/'.urlencode($file_id).'?'.$this->buildQueryString($params));
+    }
+
+    public function getFileContent($file_id=null, $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'files/'.urlencode($file_id).'/content?'.$this->buildQueryString($params));
+    }
+
+    /** $file_key : derived_file_key */
+    public function getDerivedFileContent($file_id=null, $file_key=null, $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'files/'.urlencode($file_id).'/content/'.urlencode($file_key).'?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * Returns file objects.
+     * @param array $file_ids The IDs of the files to retrieve
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: include_raw|include_file_raw.
+     * @return array An associative array representing the file data.
+     */
+    public function getFiles($file_ids=[], $params=[]) {
+        $ids = '';
+        foreach($file_ids as $id) {
+            $ids .= $id . ',';
+        }
+        $params['ids'] = substr($ids, 0, -1);
+        return $this->httpReq('get',$this->_baseUrl.'files?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * Returns a user's file objects.
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: include_raw|include_file_raw|include_user_raw.
+     * @return array An associative array representing the file data.
+     */
+    public function getUserFiles($params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/me/files?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * Delete a File. The current user must be the same user who created the File.
+     * It returns the deleted File on success.
+     * @param integer $file_id The ID of the file to delete
+     * @return array An associative array representing the file that was deleted
+     */
+    public function deleteFile($file_id=null) {
+        return $this->httpReq('delete',$this->_baseUrl.'files/'.urlencode($file_id));
     }
 
 }
