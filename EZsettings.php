@@ -21,4 +21,5 @@ $app_scope        =  [
 	// 'update_profile', // Update a user’s name, images, and other profile information
     // 'files', //  Manage a user’s files. This is not needed for uploading files.
     // 'presence', // Get and set a user's presence
+    // 'polls', // Manage a user's polls. This is not needed for creating polls (if you have write_post).
 ];

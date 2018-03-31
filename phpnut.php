@@ -1548,6 +1548,57 @@ class phpnut {
         return $this->httpReq('delete',$this->_baseUrl.'files/'.urlencode($file_id));
     }
 
+
+    /**
+     * Create a poll
+     * @param array $data An associative array of the required parameters.
+     * @param array $params An associative array of optional general parameters.
+     * Allowed keys: include_raw,include_poll_raw, ...
+     * @return array An associative array representing the poll
+     */
+    public function createPoll($data=[], $params=[]) {
+        $json = json_encode($data);
+        return $this->httpReq('post',$this->_baseUrl.'polls?'.$this->buildQueryString($params), $json, 'application/json');
+    }
+
+    /**
+     * Responds to a poll.
+     * @param integer $poll_id The ID of the poll to respond to
+     * @param integer $position The position of the poll response
+     * @param array $params An associative array of optional general parameters.
+     */
+    public function respondToPoll($poll_id=null, $position=null, $params=[]) {
+        return $this->httpReq('put',$this->_baseUrl.'polls/'.urlencode($poll_id).'/response/'.urlencode($position).'?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * Returns a specific Poll.
+     * @param integer $poll_id The ID of the poll to retrieve
+     * @param array $params An associative array of optional general parameters.
+     * @return array An associative array representing the poll
+     */
+    public function getPoll($poll_id=null, $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * Returns a user's poll objects.
+     * @param array $params An associative array of optional general parameters.
+     * @return array An associative array representing the poll data.
+     */
+    public function getUserPolls($params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/me/polls?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * Delete a Poll. The current user must be the same user who created the Poll.
+     * @param integer $poll_id The ID of the poll to delete
+     * @param array $params An associative array of optional general parameters.
+     * @return array An associative array representing the poll that was deleted
+     */
+    public function deletePoll($poll_id=null, $params=[]) {
+        return $this->httpReq('delete',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
+    }
 }
 
 class phpnutException extends Exception {}
