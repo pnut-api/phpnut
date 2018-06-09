@@ -21,7 +21,7 @@ if ($app->getSession()) {
 	$data = $app->getUser();
 
 	// accessing the user's cover image
-	echo '<body style="background:url('.$data['cover_image']['url'].')">';
+	echo '<body style="background:url('.$data['content']['cover_image']['link'].')">';
 	echo '<div style="background:#fff;opacity:0.8;padding:20px;margin:10px;border-radius:15px;">';
 	echo '<h1>Welcome to <a target="_blank" href="https://github.com/jdolitsky/phpnut">';
 	echo 'phpnut</a> (the EZ version)</h1>';
@@ -30,7 +30,7 @@ if ($app->getSession()) {
 	echo '<h3>'.$data['name'].'</h3>';
 	
 	// accessing the user's avatar image
-	echo '<img style="border:2px solid #000;" src="'.$data['avatar_image']['url'].'" /><br>';
+	echo '<img style="border:2px solid #000;" src="'.$data['content']['avatar_image']['link'].'" /><br>';
 
 	// try posting to pnut
 	if (isset($_POST['run_tests'])) {
