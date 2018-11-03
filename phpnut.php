@@ -926,6 +926,31 @@ class phpnut {
         return $this->httpReq('get', $this->_baseUrl . 'channels/search?' . $this->buildQueryString($params));
     }
     /**
+     * List the messages that match a specific search term
+     * @param array $params a list of filter, search query, and general Message parameters
+     * see: https://docs.pnut.io/resources/messages/search
+     * @param string $query The search query. Supports
+     * normal search terms. Searches common channel raw.
+     * @return array An array of associative arrays, each representing one channel.
+     * or false on error
+     */
+    public function searchMessages($params=[], $query='', $order='default') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if (!empty($query)) {
+            $params['q']=$query;
+        }
+        if ($order=='default') {
+            if (!empty($query)) {
+                $params['order']='id';
+            } else {
+                $params['order']='relevance';
+            }
+        }
+        return $this->httpReq('get', $this->_baseUrl . 'channels/messages/search?' . $this->buildQueryString($params));
+    }
+    /**
      * List the users who match a specific search term
      * @param string $search The search query. Supports @username or #tag searches as
      * well as normal search terms. Searches username, display name, bio information.
