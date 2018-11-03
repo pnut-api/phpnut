@@ -862,12 +862,94 @@ class phpnut {
     }
 
     /**
+     * Return Posts matching a specific #hashtag.
+     * @param string $hashtag The hashtag you're looking for.
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: count, before_id, since_id, include_muted, include_deleted,
+     * include_directed_posts, and include_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function searchHashtags($hashtag=null, $params = []) {
+        return $this->httpReq('get', $this->_baseUrl . 'posts/tags/' . urlencode($hashtag) . '?' . $this->buildQueryString($params));
+    }
+
+    /**
+     * List the posts who match a specific search term
+     * @param array $params a list of filter, search query, and general Post parameters
+     * see: https://docs.pnut.io/resources/posts/search
+     * @param string $query The search query. Supports
+     * normal search terms. Searches post text.
+     * @return array An array of associative arrays, each representing one post.
+     * or false on error
+     */
+    public function searchPosts($params = [], $query='', $order='default') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if (!empty($query)) {
+            $params['query']=$query;
+        }
+        if ($order=='default') {
+            if (!empty($query)) {
+                $params['order']='relevance';
+            } else {
+                $params['order']='id';
+            }
+        }
+        return $this->httpReq('get', $this->_baseUrl . 'posts/search?' . $this->buildQueryString($params));
+    }
+
+    /**
+     * List the channels that match a specific search term
+     * @param array $params a list of filter, search query, and general Channel parameters
+     * see: https://docs.pnut.io/resources/channels/search
+     * @param string $query The search query. Supports
+     * normal search terms. Searches common channel raw.
+     * @return array An array of associative arrays, each representing one channel.
+     * or false on error
+     */
+    public function searchChannels($params=[], $query='', $order='default') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if (!empty($query)) {
+            $params['q']=$query;
+        }
+        if ($order=='default') {
+            if (!empty($query)) {
+                $params['order']='id';
+            } else {
+                $params['order']='activity';
+            }
+        }
+        return $this->httpReq('get', $this->_baseUrl . 'channels/search?' . $this->buildQueryString($params));
+    }
+    /**
+     * List the users who match a specific search term
+     * @param string $search The search query. Supports @username or #tag searches as
+     * well as normal search terms. Searches username, display name, bio information.
+     * Does not search posts.
+     * @return array An array of associative arrays, each representing one user.
+     */
+    public function searchUsers($params=[], $query='') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if ($query === '') {
+            return false;
+        }
+        $params['q'] = $query;
+        return $this->httpReq('get', $this->_baseUrl . 'users/search?q=' . $this->buildQueryString($params));
+    }
+
+    /**
      * Get a user object by username
      * @param string $name the @name to get
      * @return array representing one user
      */
     public function getUserByName($name=null) {
-        return $this->httpReq('get',$this->_baseUrl.'users/@'.$name);
+        return $this->httpReq('get', $this->_baseUrl . 'users/@' . $name);
     }
 
     /**
