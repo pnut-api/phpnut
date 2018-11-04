@@ -365,7 +365,9 @@ class phpnut {
      */
     protected function buildQueryString($array) {
         foreach ($array as $k=>&$v) {
-            if ($v===true) {
+            if (is_array($v)) {
+                $v = implode(',', $v);
+            } elseif ($v===true) {
                 $v = '1';
             }
             elseif ($v===false) {
