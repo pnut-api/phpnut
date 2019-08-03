@@ -33,18 +33,16 @@ class ezphpnut extends phpnut {
 	private $_autoShutdownStreams = [];
 
 	public function __construct($clientId=null,$clientSecret=null) {
-		global $app_clientId,$app_clientSecret;
-
 		// if client id wasn't passed, and it's in the settings.php file, use it from there
-		if (!$clientId && isset($app_clientId)) {
+		if (!$clientId && defined('PNUT_CLIENT_ID')) {
 
 			// if it's still the default, warn them
-			if ($app_clientId == 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') {
-				throw new phpnutException('You must change the values defined in EZsettings.php');
+			if (PNUT_CLIENT_ID == 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') {
+				throw new phpnutException('You must change the values defined in ez-settings.php');
 			}
 
-			$clientId = $app_clientId;
-			$clientSecret = $app_clientSecret;
+			$clientId = PNUT_CLIENT_ID;
+			$clientSecret = PNUT_CLIENT_SECRET;
 		}
 
 		// call the parent with the variables we have
@@ -58,13 +56,11 @@ class ezphpnut extends phpnut {
 	}
 
 	public function getAuthUrl($redirectUri=null,$scope=null) {
-		global $app_redirectUri,$app_scope;
-		
-		if (is_null($redirectUri)) {
-			$redirectUri = $app_redirectUri;
+		if (is_null($redirectUri) && defined('PNUT_REDIRECT_URI')) {
+			$redirectUri = PNUT_REDIRECT_URI;
 		}
-		if (is_null($scope)) {
-			$scope = $app_scope;
+		if (is_null($scope) && defined('PNUT_APP_SCOPE')) {
+			$scope = PNUT_APP_SCOPE;
 		}
 		return parent::getAuthUrl($redirectUri,$scope);
 	}
@@ -72,9 +68,8 @@ class ezphpnut extends phpnut {
 	// user login
 	public function setSession($cookie=0,$callback=null) {
 
-		if (!isset($callback)) {
-			global $app_redirectUri;
-			$cb=$app_redirectUri;
+		if (!isset($callback) && defined('PNUT_REDIRECT_URI')) {
+			$cb=PNUT_REDIRECT_URI;
 		} else {
 			$cb=$callback;
 		}
