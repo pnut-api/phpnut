@@ -113,8 +113,8 @@ class phpnut {
 
         // if the digicert certificate exists in the same folder as this file,
         // remember that fact for later
-        if (file_exists(dirname(__FILE__).'/DigiCertHighAssuranceEVRootCA.pem')) {
-            $this->_sslCA = dirname(__FILE__).'/DigiCertHighAssuranceEVRootCA.pem';
+        if (file_exists(__DIR__.'/DigiCertHighAssuranceEVRootCA.pem')) {
+            $this->_sslCA = __DIR__.'/DigiCertHighAssuranceEVRootCA.pem';
         }
     }
 
