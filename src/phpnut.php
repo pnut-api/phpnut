@@ -108,6 +108,13 @@ class phpnut {
      * pnut.io when creating your app.
      */
     public function __construct($client_id,$client_secret) {
+        if (!$client_id) {
+            throw new phpnutException('You must specify your pnut client ID');
+        }
+        if (!$client_secret) {
+            throw new phpnutException('You must specify your pnut client secret');
+        }
+
         $this->_clientId = $client_id;
         $this->_clientSecret = $client_secret;
 
