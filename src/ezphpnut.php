@@ -1,4 +1,7 @@
 <?php
+
+namespace phpnut;
+
 /**
  * EZphpnut.php
  * Class for easy web development
@@ -21,13 +24,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once 'EZsettings.php';
-require_once 'phpnut.php';
-
 // comment this out if session is started elsewhere
 session_start();
 
-class EZphpnut extends phpnut {
+class ezphpnut extends phpnut {
 
 	private $_callbacks = [];
 	private $_autoShutdownStreams = [];
