@@ -107,16 +107,26 @@ class phpnut {
      * @param string $client_secret The client secret you received from
      * pnut.io when creating your app.
      */
-    public function __construct($client_id,$client_secret) {
-        if (!$client_id) {
-            throw new phpnutException('You must specify your pnut client ID');
-        }
-        if (!$client_secret) {
-            throw new phpnutException('You must specify your pnut client secret');
+    public function __construct($client_id_or_token,$client_secret) {
+        if (!$client_id_or_token) {
+            if (defined('PNUT_ACCESS_TOKEN')) {
+                $client_id_or_token = PNUT_ACCESS_TOKEN;
+            } elseif (defined('PNUT_CLIENT_ID') && defined('PNUT_CLIENT_SECRET')) {
+                $client_id_or_token = PNUT_CLIENT_ID;
+                $client_secret = PNUT_CLIENT_SECRET;
+            }
         }
 
-        $this->_clientId = $client_id;
-        $this->_clientSecret = $client_secret;
+        if (!$client_id_or_token) {
+            throw new phpnutException('You must specify your pnut access token or client ID and secret');
+        }
+
+        if ($client_id_or_token && $client_secret) {
+            $this->_clientId = $client_id_or_token;
+            $this->_clientSecret = $client_secret;
+        } else {
+            $this->_accessToken = $client_id_or_token;
+        }
 
         // if the digicert certificate exists in the same folder as this file,
         // remember that fact for later
@@ -151,6 +161,10 @@ class phpnut {
      */
     public function getAuthUrl($callback_uri,$scope=null) {
 
+        if (empty($this->_clientId)) {
+            throw new phpnutException('You must specify your pnut client ID');
+        }
+
         // construct an authorization url based on our client id and other data
         $data = [
             'client_id'=>$this->_clientId,
@@ -183,6 +197,10 @@ class phpnut {
         // if there's no access token set, and they're returning from
         // the auth page with a code, use the code to get a token
         if (!$this->_accessToken && isset($_GET['code']) && $_GET['code']) {
+
+            if (empty($this->_clientId) || empty($this->_clientSecret)) {
+                throw new phpnutException('You must specify your pnut client ID and client secret');
+            }
 
             // construct the necessary elements to get a token
             $data = [
@@ -264,6 +282,11 @@ class phpnut {
 	 * @return string The app access token
 	 */
 	public function getAppAccessToken() {
+        
+        if (empty($this->_clientId) || empty($this->_clientSecret)) {
+            throw new phpnutException('You must specify your pnut client ID and client secret');
+        }
+
 		// construct the necessary elements to get a token
 		$data = [
 			'client_id'=>$this->_clientId,
@@ -1719,3 +1742,4 @@ class phpnut {
         return $this->httpReq('delete',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
     }
 }
+
