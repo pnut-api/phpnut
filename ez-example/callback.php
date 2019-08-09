@@ -1,6 +1,7 @@
 <?php
 
-require_once '../EZphpnut.php';
+require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/ez-settings.php';
 
 $app = new EZphpnut();
 
@@ -18,5 +19,3 @@ if (isset($_SESSION['rem'])) {
 
 // redirect user after logging in
 header('Location: index.php');
-
-?>

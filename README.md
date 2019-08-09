@@ -19,12 +19,13 @@ More info on the pnut.io Stream API <a href="https://github.com/pnut-api/api-spe
 Usage:
 --------
 ### EZphpnut
+
 If you are planning to design an app for viewing within a browser that requires a login screen etc, this is a great place to start. This aims to hide all the nasty authentication stuff from the average developer. It is also recommended that you start here if you have never worked with OAuth and/or APIs before.
 
 ```php
 <?php
 
-require_once 'EZphpnut.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 $app = new EZphpnut();
 
@@ -50,9 +51,12 @@ if ($app->getSession()) {
 
 ?>
 ```
-To view a full example in action, you should copy the project files into your webroot directory. Edit the values in **EZsettings.php** to reflect the ones for your app (to make things easy, change the Callback URL within your app.net developers console to http://localhost/ez-example/callback.php). Add or remove values from the $app_scope array to change the permissions your app will have with the authenticated user. Travel to http://localhost/ez-example/ and click 'Sign in with pnut.io'.
+
+A basic working example of ezphpnut is contained in the **ez-example** directory - see the <a href="./ez-example/README.md">README.md</a> in that directory for more info.
+
 
 ### phpnut
+
 Use this class if you need more control of your application (such as running a command line process) or are integrating your code with an existing application that handles sessions/cookies in a different way.
 
 First construct your authentication url.

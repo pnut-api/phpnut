@@ -11,7 +11,9 @@ if (isset($_GET['rem'])) {
 	header('Location: index.php');
 }
 
-require_once '../EZphpnut.php';
+require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/ez-settings.php';
+
 $app = new EZphpnut();
 
 // check that the user is signed in
@@ -151,6 +153,3 @@ if ($app->getSession()) {
 	</script>
 	<?php
 }
-
-?>
-
