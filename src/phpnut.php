@@ -107,7 +107,7 @@ class phpnut {
      * @param string $client_secret The client secret you received from
      * pnut.io when creating your app.
      */
-    public function __construct($client_id_or_token, $client_secret) {
+    public function __construct($client_id_or_token=null, $client_secret=null) {
         if (!$client_id_or_token) {
             if (defined('PNUT_ACCESS_TOKEN')) {
                 $client_id_or_token = PNUT_ACCESS_TOKEN;
@@ -542,11 +542,28 @@ class phpnut {
         return $this->_last_marker;
     }
 
+    public function getLastRequest() {
+        return $this->_last_request;
+    }
+    
+    public function getLastResponse() {
+        return $this->_last_response;
+    }
+
     /**
      * Fetch API configuration object
+     * @return array
      */
     public function getConfig() {
         return $this->httpReq('get',$this->_baseUrl.'sys/config');
+    }
+
+    /**
+     * Fetch basic API statistics
+     * @return array
+     */
+    public function getStats() {
+        return $this->httpReq('get',$this->_baseUrl.'sys/stats');
     }
 
     /**
@@ -564,7 +581,7 @@ class phpnut {
      * in the URL (such as 'include_raw')
      * @return array An associative array representing the post.
      */
-    public function processText($text=null, array $data=[], array $params=[]) {
+    public function processText(string $text, array $data=[], array $params=[]) {
         $data['text'] = $text;
         $json = json_encode($data);
         $qs = '';
@@ -588,7 +605,7 @@ class phpnut {
      * in the URL (such as 'include_raw')
      * @return array An associative array representing the post.
      */
-    public function createPost($text=null, array $data=[], array $params=[]) {
+    public function createPost(string $text, array $data=[], array $params=[]) {
         $data['text'] = $text;
         $json = json_encode($data);
         $qs = '';
@@ -683,6 +700,171 @@ class phpnut {
     }
 
     /**
+     * Retrieve a list of all public Posts on pnut.io, often referred to as the
+     * global stream.
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are:    count, before_id, since_id, include_muted, include_deleted,
+     * and include_post_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function getPublicPosts(array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/streams/global?'.$this->buildQueryString($params));
+    }
+
+    /**
+    * Bookmark a post
+    * @param integer $post_id The post ID to bookmark
+    */
+    public function bookmarkPost(int $post_id) {
+        return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).'/bookmark');
+    }
+
+    /**
+    * Unbookmark a post
+    * @param integer $post_id The post ID to unbookmark
+    */
+    public function unbookmarkPost(int $post_id) {
+        return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id).'/bookmark');
+    }
+
+    /**
+    * List the posts bookmarked by the current user
+    * @param array $params An associative array of optional general parameters.
+    * This will likely change as the API evolves, as of this writing allowed keys
+    * are:    count, before_id, since_id, include_muted, include_deleted,
+    * and include_post_raw.
+    * See https://github.com/phpnut/api-spec/blob/master/resources/posts.md#general-parameters
+    * @return array An array of associative arrays, each representing a single
+    * user who has bookmarked a post
+    */
+    public function getBookmarked($user_id='me', array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id).'/bookmarks?'.$this->buildQueryString($params));
+    }
+
+    /**
+    * List the interactions with a post (bookmark, repost, reply)
+    * @param integer $post_id the post ID to get interactions from
+    * @param array $params optional parameters like filters or excludes
+    * @return array An array of associative arrays, each representing one post interaction.
+    */
+    public function getPostInteractions(int $post_id, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/interactions?'.$this->buildQueryString($params));
+    }
+
+    /**
+    * List the bookmarks of a post
+    * @param integer $post_id the post ID to get stars from
+    * @return array An array of associative arrays, each representing one bookmark action.
+    */
+    public function getPostBookmarks(int $post_id) {
+        return $this->getPostInteractions($post_id, ['filters'=>['bookmark']]);
+    }
+
+    /**
+     * Returns an array of User objects of users who reposted the specified post.
+     * @param integer $post_id the post ID to
+     * @return array An array of associative arrays, each representing a single
+     * user who reposted $post_id
+     */
+    public function getPostReposts(int $post_id) {
+        return $this->getPostInteractions($post_id, ['filters'=>['repost']]);
+    }
+
+    /**
+     * Repost an existing Post object.
+     * @param integer $post_id The id of the post
+     * @return the reposted post
+     */
+    public function repost(int $post_id) {
+        return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).'/repost');
+    }
+
+    /**
+     * Delete a post that the user has reposted.
+     * @param integer $post_id The id of the post
+     * @return the un-reposted post
+     */
+    public function deleteRepost(int $post_id) {
+        return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id).'/repost');
+    }
+
+    /**
+     * Return Posts matching a specific #hashtag.
+     * @param string $hashtag The hashtag you're looking for.
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: count, before_id, since_id, include_muted, include_deleted,
+     * include_directed_posts, and include_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function searchHashtags(string $hashtag, array $params=[]) {
+        return $this->httpReq('get', $this->_baseUrl . 'posts/tags/' . urlencode($hashtag) . '?' . $this->buildQueryString($params));
+    }
+
+    /**
+     * List the posts who match a specific search term
+     * @param array $params a list of filter, search query, and general Post parameters
+     * see: https://docs.pnut.io/resources/posts/search
+     * @param string $query The search query. Supports
+     * normal search terms. Searches post text.
+     * @return array An array of associative arrays, each representing one post.
+     * or false on error
+     */
+    public function searchPosts(array $params=[], string $query='', string $order='default') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if (!empty($query)) {
+            $params['q'] = $query;
+        }
+        if ($order=='default') {
+            if (!empty($query)) {
+                $params['order'] = 'relevance';
+            } else {
+                $params['order'] = 'id';
+            }
+        }
+        return $this->httpReq('get', $this->_baseUrl . 'posts/search?' . $this->buildQueryString($params));
+    }
+
+    /**
+     * Return the 20 most recent posts for a stream using a valid Token
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are: count, before_id, since_id, include_muted, include_deleted,
+     * and include_post_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function getUserPersonalStream(array $params=[]) {
+        if ($params['access_token']) {
+            return $this->httpReq('get',$this->_baseUrl.'posts/streams/me?'.$this->buildQueryString($params),$params);
+        } else {
+            return $this->httpReq('get',$this->_baseUrl.'posts/streams/me?'.$this->buildQueryString($params));
+        }
+    }
+    
+    /**
+    * Return the 20 most recent Posts from the current User's personalized stream
+    * and mentions stream merged into one stream.
+    * @param array $params An associative array of optional general parameters.
+    * This will likely change as the API evolves, as of this writing allowed keys
+    * are: count, before_id, since_id, include_muted, include_deleted,
+    * include_directed_posts, and include_raw.
+    * @return An array of associative arrays, each representing a single post.
+    */
+    public function getUserUnifiedStream(array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/streams/unified?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * List User interactions
+     */
+    public function getMyActions(array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/me/interactions?'.$this->buildQueryString($params));
+    }
+
+    /**
      * Returns a specific user object.
      * @param mixed $user_id The ID of the user you want to retrieve, or the string "@-username", or the string
      * "me" to retrieve data for the users you're currently authenticated as.
@@ -748,7 +930,7 @@ class phpnut {
      * @return array user ids the specified user is following.
      */
     public function getFollowingIDs($user_id='me') {
-        return $this->httpReq('get',$this->_baseUrl.'users/'.$user_id.'/following?include_user_as_id=1');
+        return $this->httpReq('get',$this->_baseUrl.'users/'.$user_id.'/following?include_user=0');
     }
     
     /**
@@ -771,27 +953,7 @@ class phpnut {
      * @return array user ids for users following the specified user
      */
     public function getFollowersIDs($user_id='me') {
-        return $this->httpReq('get',$this->_baseUrl.'users/'.$user_id.'/followers?include_user_as_id=1');
-    }
-
-    /**
-     * Retrieve a list of all public Posts on pnut.io, often referred to as the
-     * global stream.
-     * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
-     * @return An array of associative arrays, each representing a single post.
-     */
-    public function getPublicPosts(array $params=[]) {
-        return $this->httpReq('get',$this->_baseUrl.'posts/streams/global?'.$this->buildQueryString($params));
-    }
-
-    /**
-     * List User interactions
-     */
-    public function getMyActions(array $params=[]) {
-        return $this->httpReq('get',$this->_baseUrl.'users/me/interactions?'.$this->buildQueryString($params));
+        return $this->httpReq('get',$this->_baseUrl.'users/'.$user_id.'/followers?include_user=0');
     }
 
     /**
@@ -801,7 +963,7 @@ class phpnut {
      * @return integer The user's user ID
      */
     public function getIdByUsername(string $username) {
-        return $this->httpReq('get',$this->_baseUrl.'users/@'.$username.'?include_user_as_id=1');
+        return $this->httpReq('get',$this->_baseUrl.'users/@'.$username.'?include_user=0');
     }
 
     /**
@@ -829,162 +991,14 @@ class phpnut {
     }
 
     /**
-    * Bookmark a post
-    * @param integer $post_id The post ID to bookmark
-    */
-    public function bookmarkPost(int $post_id) {
-        return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).'/bookmark');
-    }
-
-    /**
-    * Unbookmark a post
-    * @param integer $post_id The post ID to unbookmark
-    */
-    public function unbookmarkPost(int $post_id) {
-        return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id).'/bookmark');
-    }
-
-    /**
-    * List the posts bookmarked by the current user
-    * @param array $params An associative array of optional general parameters.
-    * This will likely change as the API evolves, as of this writing allowed keys
-    * are:    count, before_id, since_id, include_muted, include_deleted,
-    * and include_post_raw.
-    * See https://github.com/phpnut/api-spec/blob/master/resources/posts.md#general-parameters
-    * @return array An array of associative arrays, each representing a single
-    * user who has bookmarked a post
-    */
-    public function getBookmarked($user_id='me', array $params=[]) {
-        return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id).'/bookmarks'
-                    .'?'.$this->buildQueryString($params));
-    }
-
-    /**
-    * List the bookmarks of a post
-    * @param integer $post_id the post ID to get stars from
-    * @return array An array of associative arrays, each representing one bookmark action.
-    */
-    public function getPostBookmarks(int $post_id) {
-        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/interactions?filter=bookmark');
-    }
-
-    /**
-     * Returns an array of User objects of users who reposted the specified post.
-     * @param integer $post_id the post ID to
-     * @return array An array of associative arrays, each representing a single
-     * user who reposted $post_id
+     * Get a user object by username
+     * @param string $name the @name to get
+     * @return array representing one user
      */
-    public function getPostReposts(int $post_id) {
-        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/interactions?filter=repost');
+    public function getUserByName(string $name) {
+        return $this->httpReq('get', $this->_baseUrl . 'users/@' . $name);
     }
 
-    /**
-     * Repost an existing Post object.
-     * @param integer $post_id The id of the post
-     * @return the reposted post
-     */
-    public function repost(int $post_id) {
-        return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).'/repost');
-    }
-
-    /**
-     * Delete a post that the user has reposted.
-     * @param integer $post_id The id of the post
-     * @return the un-reposted post
-     */
-    public function deleteRepost(int $post_id) {
-        return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id).'/repost');
-    }
-
-    /**
-     * Return Posts matching a specific #hashtag.
-     * @param string $hashtag The hashtag you're looking for.
-     * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are: count, before_id, since_id, include_muted, include_deleted,
-     * include_directed_posts, and include_raw.
-     * @return An array of associative arrays, each representing a single post.
-     */
-    public function searchHashtags(string $hashtag, array $params=[]) {
-        return $this->httpReq('get', $this->_baseUrl . 'posts/tags/' . urlencode($hashtag) . '?' . $this->buildQueryString($params));
-    }
-
-    /**
-     * List the posts who match a specific search term
-     * @param array $params a list of filter, search query, and general Post parameters
-     * see: https://docs.pnut.io/resources/posts/search
-     * @param string $query The search query. Supports
-     * normal search terms. Searches post text.
-     * @return array An array of associative arrays, each representing one post.
-     * or false on error
-     */
-    public function searchPosts(array $params=[], string $query='', string $order='default') {
-        if (!is_array($params)) {
-            return false;
-        }
-        if (!empty($query)) {
-            $params['q']=$query;
-        }
-        if ($order=='default') {
-            if (!empty($query)) {
-                $params['order']='relevance';
-            } else {
-                $params['order']='id';
-            }
-        }
-        return $this->httpReq('get', $this->_baseUrl . 'posts/search?' . $this->buildQueryString($params));
-    }
-
-    /**
-     * List the channels that match a specific search term
-     * @param array $params a list of filter, search query, and general Channel parameters
-     * see: https://docs.pnut.io/resources/channels/search
-     * @param string $query The search query. Supports
-     * normal search terms. Searches common channel raw.
-     * @return array An array of associative arrays, each representing one channel.
-     * or false on error
-     */
-    public function searchChannels(array $params=[], string $query='', string $order='default') {
-        if (!is_array($params)) {
-            return false;
-        }
-        if (!empty($query)) {
-            $params['q']=$query;
-        }
-        if ($order=='default') {
-            if (!empty($query)) {
-                $params['order']='id';
-            } else {
-                $params['order']='activity';
-            }
-        }
-        return $this->httpReq('get', $this->_baseUrl . 'channels/search?' . $this->buildQueryString($params));
-    }
-    /**
-     * List the messages that match a specific search term
-     * @param array $params a list of filter, search query, and general Message parameters
-     * see: https://docs.pnut.io/resources/messages/search
-     * @param string $query The search query. Supports
-     * normal search terms. Searches common channel raw.
-     * @return array An array of associative arrays, each representing one channel.
-     * or false on error
-     */
-    public function searchMessages(array $params=[], string $query='', string $order='default') {
-        if (!is_array($params)) {
-            return false;
-        }
-        if (!empty($query)) {
-            $params['q']=$query;
-        }
-        if ($order=='default') {
-            if (!empty($query)) {
-                $params['order']='id';
-            } else {
-                $params['order']='relevance';
-            }
-        }
-        return $this->httpReq('get', $this->_baseUrl . 'channels/messages/search?' . $this->buildQueryString($params));
-    }
     /**
      * List the users who match a specific search term
      * @param string $search The search query. Supports @username or #tag searches as
@@ -1001,44 +1015,6 @@ class phpnut {
         }
         $params['q'] = $query;
         return $this->httpReq('get', $this->_baseUrl . 'users/search?q=' . $this->buildQueryString($params));
-    }
-
-    /**
-     * Get a user object by username
-     * @param string $name the @name to get
-     * @return array representing one user
-     */
-    public function getUserByName(string $name) {
-        return $this->httpReq('get', $this->_baseUrl . 'users/@' . $name);
-    }
-
-    /**
-     * Return the 20 most recent posts for a stream using a valid Token
-     * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are: count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
-     * @return An array of associative arrays, each representing a single post.
-     */
-    public function getUserPersonalStream(array $params=[]) {
-        if ($params['access_token']) {
-            return $this->httpReq('get',$this->_baseUrl.'posts/streams/me?'.$this->buildQueryString($params),$params);
-        } else {
-            return $this->httpReq('get',$this->_baseUrl.'posts/streams/me?'.$this->buildQueryString($params));
-        }
-    }
-    
-    /**
-    * Return the 20 most recent Posts from the current User's personalized stream
-    * and mentions stream merged into one stream.
-    * @param array $params An associative array of optional general parameters.
-    * This will likely change as the API evolves, as of this writing allowed keys
-    * are: count, before_id, since_id, include_muted, include_deleted,
-    * include_directed_posts, and include_raw.
-    * @return An array of associative arrays, each representing a single post.
-    */
-    public function getUserUnifiedStream(array $params=[]) {
-        return $this->httpReq('get',$this->_baseUrl.'posts/streams/unified?'.$this->buildQueryString($params));
     }
 
     /**
@@ -1147,7 +1123,7 @@ class phpnut {
      * get all user IDs subscribed to channelid
      */
     public function getChannelSubscriptionsById(int $channelid) {
-        return $this->httpReq('get',$this->_baseUrl.'channel/'.$channelid.'/subscribers?include_user_as_id=1');
+        return $this->httpReq('get',$this->_baseUrl.'channel/'.$channelid.'/subscribers?include_user=0');
     }
     
     /**
@@ -1155,6 +1131,32 @@ class phpnut {
      */
     public function deleteChannel(int $channelid) {
         return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid);
+    }
+
+    /**
+     * List the channels that match a specific search term
+     * @param array $params a list of filter, search query, and general Channel parameters
+     * see: https://docs.pnut.io/resources/channels/search
+     * @param string $query The search query. Supports
+     * normal search terms. Searches common channel raw.
+     * @return array An array of associative arrays, each representing one channel.
+     * or false on error
+     */
+    public function searchChannels(array $params=[], string $query='', string $order='default') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if (!empty($query)) {
+            $params['q'] = $query;
+        }
+        if ($order == 'default') {
+            if (!empty($query)) {
+                $params['order'] = 'id';
+            } else {
+                $params['order'] = 'activity';
+            }
+        }
+        return $this->httpReq('get', $this->_baseUrl . 'channels/search?' . $this->buildQueryString($params));
     }
 
 
@@ -1188,346 +1190,31 @@ class phpnut {
     public function deleteMessage(int $channelid, int $messageid) {
         return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid);
     }
-    
-    /**
-	 * Get Application Information
-	 */
-	public function getAppTokenInfo() {
-		// requires appAccessToken
-		if (!$this->_appAccessToken) {
-			$this->getAppAccessToken();
-		}
-		// ensure request is made with our appAccessToken
-		$params['access_token'] = $this->_appAccessToken;
-		return $this->httpReq('get',$this->_baseUrl.'token',$params);
-	}
-    
-	/**
-	 * Get User Information
-	 */
-	public function getUserTokenInfo() {
-		return $this->httpReq('get',$this->_baseUrl.'token');
-	}
-    
-	/**
-	 * Get Application Authorized User IDs
-	 */
-	public function getAppUserIDs() {
-		// requires appAccessToken
-		if (!$this->_appAccessToken) {
-			$this->getAppAccessToken();
-		}
-		// ensure request is made with our appAccessToken
-		$params['access_token'] = $this->_appAccessToken;
-		return $this->httpReq('get',$this->_baseUrl.'apps/me/users/ids',$params);
-	}
-    
-	/**
-	 * Get Application Authorized User Tokens
-	 */
-	public function getAppUserTokens() {
-		// requires appAccessToken
-		if (!$this->_appAccessToken) {
-			$this->getAppAccessToken();
-		}
-		// ensure request is made with our appAccessToken
-		$params['access_token'] = $this->_appAccessToken;
-		return $this->httpReq('get',$this->_baseUrl.'apps/me/users/tokens',$params);
-	}
-    
-    /**
-	 * Registers your function (or an array of object and method) to be called
-	 * whenever an event is received via an open pnut.io stream. Your function
-	 * will receive a single parameter, which is the object wrapper containing
-	 * the meta and data.
-	 * @param mixed A PHP callback (either a string containing the function name,
-	 * or an array where the first element is the class/object and the second
-	 * is the method).
-	 */
-	public function registerStreamFunction($function) {
-		$this->_streamCallback = $function;
-	}
-    
-	/**
-	 * Opens a stream that's been created for this user/app and starts sending
-	 * events/objects to your defined callback functions. You must define at
-	 * least one callback function before opening a stream.
-	 * @param mixed $stream Either a stream ID or the endpoint of a stream
-	 * you've already created. This stream must exist and must be valid for
-	 * your current access token. If you pass a stream ID, the library will
-	 * make an API call to get the endpoint.
-	 *
-	 * This function will return immediately, but your callback functions
-	 * will continue to receive events until you call closeStream() or until
-	 * pnut.io terminates the stream from their end with an error.
-	 *
-	 * If you're disconnected due to a network error, the library will
-	 * automatically attempt to reconnect you to the same stream, no action
-	 * on your part is necessary for this. However if the pnut.io API returns
-	 * an error, a reconnection attempt will not be made.
-	 *
-	 * Note there is no closeStream, because once you open a stream you
-	 * can't stop it (unless you exit() or die() or throw an uncaught
-	 * exception, or something else that terminates the script).
-	 * @return boolean True
-	 * @see createStream()
-	 */
-	public function openStream($stream) {
-		// if there's already a stream running, don't allow another
-		if ($this->_currentStream) {
-			throw new phpnutException('There is already a stream being consumed, only one stream can be consumed per phpnutStream instance');
-		}
-		// must register a callback (or the exercise is pointless)
-		if (!$this->_streamCallback) {
-			throw new phpnutException('You must define your callback function using registerStreamFunction() before calling openStream');
-		}
-		// if the stream is a numeric value, get the stream info from the api
-		if (is_numeric($stream)) {
-			$stream = $this->getStream($stream);
-			$this->_streamUrl = $stream['endpoint'];
-		}
-		else {
-			$this->_streamUrl = $stream;
-		}
-		// continue doing this until we get an error back or something...?
-		$this->httpStream('get',$this->_streamUrl);
-		return true;
-	}
-    
-	/**
-	 * Close the currently open stream.
-	 * @return true;
-	 */
-	public function closeStream() {
-		if (!$this->_lastStreamActivity) {
-			// never opened
-			return;
-		}
-		if (!$this->_multiStream) {
-			throw new phpnutException('You must open a stream before calling closeStream()');
-		}
-		curl_close($this->_currentStream);
-		curl_multi_remove_handle($this->_multiStream,$this->_currentStream);
-		curl_multi_close($this->_multiStream);
-		$this->_currentStream = null;
-		$this->_multiStream = null;
-	}
-    
-	/**
-	 * Retrieve all streams for the current access token.
-	 * @return array An array of stream definitions.
-	 */
-	public function getAllStreams() {
-		return $this->httpReq('get',$this->_baseUrl.'streams');
-	}
-    
-	/**
-	 * Returns a single stream specified by a stream ID. The stream must have been
-	 * created with the current access token.
-	 * @return array A stream definition
-	 */
-	public function getStream(string $streamId) {
-		return $this->httpReq('get',$this->_baseUrl.'streams/'.urlencode($streamId));
-	}
-    
-	/**
-	 * Creates a stream for the current app access token.
-	 *
-	 * @param array $objectTypes The objects you want to retrieve data for from the
-	 * stream. At time of writing these can be 'post', 'bookmark', 'user_follow', 'mute', 'block', 'stream_marker', 'message', 'channel', 'channel_subscription', 'token', and/or 'user'.
-	 * If you don't specify, a few standard events will be retrieved.
-	 */
-	public function createStream($objectTypes=null) {
-		// default object types to everything
-		if (is_null($objectTypes)) {
-			$objectTypes = ['post','bookmark','user_follow'];
-		}
-		$data = [
-			'object_types'=>$objectTypes,
-			'type'=>'long_poll',
-		];
-		$data = json_encode($data);
-		$response = $this->httpReq('post',$this->_baseUrl.'streams',$data,'application/json');
-		return $response;
-	}
-    
-	/**
-	 * Update stream for the current app access token
-	 *
-	 * @param string $streamId The stream ID to update. This stream must have been
-	 * created by the current access token.
-	 * @param array $data allows object_types, type, filter_id and key to be updated. filter_id/key can be omitted
-	 */
-	public function updateStream(string $streamId, array $data) {
-		// objectTypes is likely required
-		if (is_null($data['object_types'])) {
-			$data['object_types'] = ['post','bookmark','user_follow'];
-		}
-		// type can still only be long_poll
-		if (is_null($data['type'])) {
-			$data['type']='long_poll';
-		}
-		$data = json_encode($data);
-		$response = $this->httpReq('put',$this->_baseUrl.'streams/'.urlencode($streamId),$data,'application/json');
-		return $response;
-	}
-     
-	/**
-	 * Deletes a stream if you no longer need it.
-	 *
-	 * @param string $streamId The stream ID to delete. This stream must have been
-	 * created by the current access token.
-	 */
-	public function deleteStream(string $streamId) {
-		return $this->httpReq('delete',$this->_baseUrl.'streams/'.urlencode($streamId));
-	}
-    
-	/**
-	 * Deletes all streams created by the current access token.
-	 */
-	public function deleteAllStreams() {
-		return $this->httpReq('delete',$this->_baseUrl.'streams');
-	}
-    
-	/**
-	 * Internal function used to process incoming chunks from the stream. This is only
-	 * public because it needs to be accessed by CURL. Do not call or use this function
-	 * in your own code.
-	 * @ignore
-	 */
-	public function httpStreamReceive($ch,$data) {
-		$this->_lastStreamActivity = time();
-		$this->_streamBuffer .= $data;
-		if (!$this->_streamHeaders) {
-			$pos = strpos($this->_streamBuffer,"\r\n\r\n");
-			if ($pos!==false) {
-				$this->_streamHeaders = substr($this->_streamBuffer,0,$pos);
-				$this->_streamBuffer = substr($this->_streamBuffer,$pos+4);
-			}
-		}
-		else {
-			$pos = strpos($this->_streamBuffer,"\r\n");
-			while ($pos!==false) {
-				$command = substr($this->_streamBuffer,0,$pos);
-				$this->_streamBuffer = substr($this->_streamBuffer,$pos+2);
-				$command = json_decode($command,true);
-				if ($command) {
-					call_user_func($this->_streamCallback,$command);
-				}
-				$pos = strpos($this->_streamBuffer,"\r\n");
-			}
-		}
-		return strlen($data);
-	}
-    
-	/**
-	 * Opens a long lived HTTP connection to the pnut.io servers, and sends data
-	 * received to the httpStreamReceive function. As a general rule you should not
-	 * directly call this method, it's used by openStream().
-	 */
-	protected function httpStream(string $act, $req, array $params=[], string $contentType='application/x-www-form-urlencoded') {
-		if ($this->_currentStream) {
-			throw new phpnutException('There is already an open stream, you must close the existing one before opening a new one');
-		}
-		$headers = [];
-		$this->_streamBuffer = '';
-		if ($this->_accessToken) {
-			$headers[] = 'Authorization: Bearer '.$this->_accessToken;
-		}
-		$this->_currentStream = curl_init($req);
-		curl_setopt($this->_currentStream, CURLOPT_HTTPHEADER, $headers);
-		curl_setopt($this->_currentStream, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($this->_currentStream, CURLINFO_HEADER_OUT, true);
-		curl_setopt($this->_currentStream, CURLOPT_HEADER, true);
-		if ($this->_sslCA) {
-			curl_setopt($this->_currentStream, CURLOPT_CAINFO, $this->_sslCA);
-		}
-		// every time we receive a chunk of data, forward it to httpStreamReceive
-		curl_setopt($this->_currentStream, CURLOPT_WRITEFUNCTION, array($this, 'httpStreamReceive'));
-		// curl_exec($ch);
-		// return;
-		$this->_multiStream = curl_multi_init();
-		$this->_lastStreamActivity = time();
-		curl_multi_add_handle($this->_multiStream,$this->_currentStream);
-	}
-    
-	public function reconnectStream() {
-		$this->closeStream();
-		$this->_connectFailCounter++;
-		// if we've failed a few times, back off
-		if ($this->_connectFailCounter>1) {
-			$sleepTime = pow(2,$this->_connectFailCounter);
-			// don't sleep more than 60 seconds
-			if ($sleepTime>60) {
-				$sleepTime = 60;
-			}
-			sleep($sleepTime);
-		}
-		$this->httpStream('get',$this->_streamUrl);
-	}
-    
-	/**
-	 * Process an open stream for x microseconds, then return. This is useful if you want
-	 * to be doing other things while processing the stream. If you just want to
-	 * consume the stream without other actions, you can call processForever() instead.
-	 * @param float @microseconds The number of microseconds to process for before
-	 * returning. There are 1,000,000 microseconds in a second.
-	 *
-	 * @return void
-	 */
-	public function processStream($microseconds=null) {
-		if (!$this->_multiStream) {
-			throw new phpnutException('You must open a stream before calling processStream()');
-		}
-		$start = microtime(true);
-		$active = null;
-		$inQueue = null;
-		$sleepFor = 0;
-		do {
-			// if we haven't received anything within 5.5 minutes, reconnect
-			// keepalives are sent every 5 minutes (measured on 2013-3-12 by @ryantharp)
-			if (time()-$this->_lastStreamActivity>=330) {
-				$this->reconnectStream();
-			}
-			curl_multi_exec($this->_multiStream, $active);
-			if (!$active) {
-				$httpCode = curl_getinfo($this->_currentStream,CURLINFO_HTTP_CODE);
-				// don't reconnect on 400 errors
-				if ($httpCode>=400 && $httpCode<=499) {
-					throw new phpnutException('Received HTTP error '.$httpCode.' check your URL and credentials before reconnecting');
-				}
-				$this->reconnectStream();
-			}
-			// sleep for a max of 2/10 of a second
-			$timeSoFar = (microtime(true)-$start)*1000000;
-			$sleepFor = $this->streamingSleepFor;
-			if ($timeSoFar+$sleepFor>$microseconds) {
-				$sleepFor = $microseconds - $timeSoFar;
-			}
-			if ($sleepFor>0) {
-				usleep($sleepFor);
-			}
-		} while ($timeSoFar+$sleepFor<$microseconds);
-	}
-    
-	/**
-	 * Process an open stream forever. This function will never return, if you
-	 * want to perform other actions while consuming the stream, you should use
-	 * processFor() instead.
-	 * @return void This function will never return
-	 * @see processFor();
-	 */
-	public function processStreamForever() {
-		while (true) {
-			$this->processStream(600);
-		}
-	}
 
-    public function getLastRequest() {
-        return $this->_last_request;
-    }
-    public function getLastResponse() {
-        return $this->_last_response;
+    /**
+     * List the messages that match a specific search term
+     * @param array $params a list of filter, search query, and general Message parameters
+     * see: https://docs.pnut.io/resources/messages/search
+     * @param string $query The search query. Supports
+     * normal search terms. Searches common channel raw.
+     * @return array An array of associative arrays, each representing one channel.
+     * or false on error
+     */
+    public function searchMessages(array $params=[], string $query='', string $order='default') {
+        if (!is_array($params)) {
+            return false;
+        }
+        if (!empty($query)) {
+            $params['q'] = $query;
+        }
+        if ($order == 'default') {
+            if (!empty($query)) {
+                $params['order'] = 'id';
+            } else {
+                $params['order'] = 'relevance';
+            }
+        }
+        return $this->httpReq('get', $this->_baseUrl . 'channels/messages/search?' . $this->buildQueryString($params));
     }
 
     /**
@@ -1680,7 +1367,6 @@ class phpnut {
         return $this->httpReq('delete',$this->_baseUrl.'files/'.urlencode($file_id));
     }
 
-
     /**
      * Create a poll
      * @param array $data An associative array of the required parameters.
@@ -1732,5 +1418,342 @@ class phpnut {
     public function deletePoll(int $poll_id, array $params=[]) {
         return $this->httpReq('delete',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
     }
-}
 
+
+
+    /**
+     * Get Application Information
+     */
+    public function getAppTokenInfo() {
+        // requires appAccessToken
+        if (!$this->_appAccessToken) {
+            $this->getAppAccessToken();
+        }
+        // ensure request is made with our appAccessToken
+        $params['access_token'] = $this->_appAccessToken;
+        return $this->httpReq('get',$this->_baseUrl.'token',$params);
+    }
+    
+    /**
+     * Get User Information
+     */
+    public function getUserTokenInfo() {
+        return $this->httpReq('get',$this->_baseUrl.'token');
+    }
+    
+    /**
+     * Get Application Authorized User IDs
+     */
+    public function getAppUserIDs() {
+        // requires appAccessToken
+        if (!$this->_appAccessToken) {
+            $this->getAppAccessToken();
+        }
+        // ensure request is made with our appAccessToken
+        $params['access_token'] = $this->_appAccessToken;
+        return $this->httpReq('get',$this->_baseUrl.'apps/me/users/ids',$params);
+    }
+    
+    /**
+     * Get Application Authorized User Tokens
+     */
+    public function getAppUserTokens() {
+        // requires appAccessToken
+        if (!$this->_appAccessToken) {
+            $this->getAppAccessToken();
+        }
+        // ensure request is made with our appAccessToken
+        $params['access_token'] = $this->_appAccessToken;
+        return $this->httpReq('get',$this->_baseUrl.'apps/me/users/tokens',$params);
+    }
+
+
+
+    /**
+     * Registers your function (or an array of object and method) to be called
+     * whenever an event is received via an open pnut.io stream. Your function
+     * will receive a single parameter, which is the object wrapper containing
+     * the meta and data.
+     * @param mixed A PHP callback (either a string containing the function name,
+     * or an array where the first element is the class/object and the second
+     * is the method).
+     */
+    public function registerStreamFunction($function) {
+        $this->_streamCallback = $function;
+    }
+    
+    /**
+     * Opens a stream that's been created for this user/app and starts sending
+     * events/objects to your defined callback functions. You must define at
+     * least one callback function before opening a stream.
+     * @param mixed $stream Either a stream ID or the endpoint of a stream
+     * you've already created. This stream must exist and must be valid for
+     * your current access token. If you pass a stream ID, the library will
+     * make an API call to get the endpoint.
+     *
+     * This function will return immediately, but your callback functions
+     * will continue to receive events until you call closeStream() or until
+     * pnut.io terminates the stream from their end with an error.
+     *
+     * If you're disconnected due to a network error, the library will
+     * automatically attempt to reconnect you to the same stream, no action
+     * on your part is necessary for this. However if the pnut.io API returns
+     * an error, a reconnection attempt will not be made.
+     *
+     * Note there is no closeStream, because once you open a stream you
+     * can't stop it (unless you exit() or die() or throw an uncaught
+     * exception, or something else that terminates the script).
+     * @return boolean True
+     * @see createStream()
+     */
+    public function openStream($stream) {
+        // if there's already a stream running, don't allow another
+        if ($this->_currentStream) {
+            throw new phpnutException('There is already a stream being consumed, only one stream can be consumed per phpnutStream instance');
+        }
+        // must register a callback (or the exercise is pointless)
+        if (!$this->_streamCallback) {
+            throw new phpnutException('You must define your callback function using registerStreamFunction() before calling openStream');
+        }
+        // if the stream is a numeric value, get the stream info from the api
+        if (is_numeric($stream)) {
+            $stream = $this->getStream($stream);
+            $this->_streamUrl = $stream['endpoint'];
+        }
+        else {
+            $this->_streamUrl = $stream;
+        }
+        // continue doing this until we get an error back or something...?
+        $this->httpStream('get',$this->_streamUrl);
+        return true;
+    }
+    
+    /**
+     * Close the currently open stream.
+     * @return true;
+     */
+    public function closeStream() {
+        if (!$this->_lastStreamActivity) {
+            // never opened
+            return;
+        }
+        if (!$this->_multiStream) {
+            throw new phpnutException('You must open a stream before calling closeStream()');
+        }
+        curl_close($this->_currentStream);
+        curl_multi_remove_handle($this->_multiStream,$this->_currentStream);
+        curl_multi_close($this->_multiStream);
+        $this->_currentStream = null;
+        $this->_multiStream = null;
+    }
+    
+    /**
+     * Retrieve all streams for the current access token.
+     * @return array An array of stream definitions.
+     */
+    public function getAllStreams() {
+        return $this->httpReq('get',$this->_baseUrl.'streams');
+    }
+    
+    /**
+     * Returns a single stream specified by a stream ID. The stream must have been
+     * created with the current access token.
+     * @return array A stream definition
+     */
+    public function getStream(string $streamId) {
+        return $this->httpReq('get',$this->_baseUrl.'streams/'.urlencode($streamId));
+    }
+    
+    /**
+     * Creates a stream for the current app access token.
+     *
+     * @param array $objectTypes The objects you want to retrieve data for from the
+     * stream. At time of writing these can be 'post', 'bookmark', 'user_follow', 'mute', 'block', 'stream_marker', 'message', 'channel', 'channel_subscription', 'token', and/or 'user'.
+     * If you don't specify, a few standard events will be retrieved.
+     */
+    public function createStream($objectTypes=null) {
+        // default object types to everything
+        if (is_null($objectTypes)) {
+            $objectTypes = ['post','bookmark','user_follow'];
+        }
+        $data = [
+            'object_types'=>$objectTypes,
+            'type'=>'long_poll',
+        ];
+        $data = json_encode($data);
+        $response = $this->httpReq('post',$this->_baseUrl.'streams',$data,'application/json');
+        return $response;
+    }
+    
+    /**
+     * Update stream for the current app access token
+     *
+     * @param string $streamId The stream ID to update. This stream must have been
+     * created by the current access token.
+     * @param array $data allows object_types, type, filter_id and key to be updated. filter_id/key can be omitted
+     */
+    public function updateStream(string $streamId, array $data) {
+        // objectTypes is likely required
+        if (is_null($data['object_types'])) {
+            $data['object_types'] = ['post','bookmark','user_follow'];
+        }
+        // type can still only be long_poll
+        if (is_null($data['type'])) {
+            $data['type']='long_poll';
+        }
+        $data = json_encode($data);
+        $response = $this->httpReq('put',$this->_baseUrl.'streams/'.urlencode($streamId),$data,'application/json');
+        return $response;
+    }
+     
+    /**
+     * Deletes a stream if you no longer need it.
+     *
+     * @param string $streamId The stream ID to delete. This stream must have been
+     * created by the current access token.
+     */
+    public function deleteStream(string $streamId) {
+        return $this->httpReq('delete',$this->_baseUrl.'streams/'.urlencode($streamId));
+    }
+    
+    /**
+     * Deletes all streams created by the current access token.
+     */
+    public function deleteAllStreams() {
+        return $this->httpReq('delete',$this->_baseUrl.'streams');
+    }
+    
+    /**
+     * Internal function used to process incoming chunks from the stream. This is only
+     * public because it needs to be accessed by CURL. Do not call or use this function
+     * in your own code.
+     * @ignore
+     */
+    public function httpStreamReceive($ch,$data) {
+        $this->_lastStreamActivity = time();
+        $this->_streamBuffer .= $data;
+        if (!$this->_streamHeaders) {
+            $pos = strpos($this->_streamBuffer,"\r\n\r\n");
+            if ($pos!==false) {
+                $this->_streamHeaders = substr($this->_streamBuffer,0,$pos);
+                $this->_streamBuffer = substr($this->_streamBuffer,$pos+4);
+            }
+        }
+        else {
+            $pos = strpos($this->_streamBuffer,"\r\n");
+            while ($pos!==false) {
+                $command = substr($this->_streamBuffer,0,$pos);
+                $this->_streamBuffer = substr($this->_streamBuffer,$pos+2);
+                $command = json_decode($command,true);
+                if ($command) {
+                    call_user_func($this->_streamCallback,$command);
+                }
+                $pos = strpos($this->_streamBuffer,"\r\n");
+            }
+        }
+        return strlen($data);
+    }
+    
+    /**
+     * Opens a long lived HTTP connection to the pnut.io servers, and sends data
+     * received to the httpStreamReceive function. As a general rule you should not
+     * directly call this method, it's used by openStream().
+     */
+    protected function httpStream(string $act, $req, array $params=[], string $contentType='application/x-www-form-urlencoded') {
+        if ($this->_currentStream) {
+            throw new phpnutException('There is already an open stream, you must close the existing one before opening a new one');
+        }
+        $headers = [];
+        $this->_streamBuffer = '';
+        if ($this->_accessToken) {
+            $headers[] = 'Authorization: Bearer '.$this->_accessToken;
+        }
+        $this->_currentStream = curl_init($req);
+        curl_setopt($this->_currentStream, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($this->_currentStream, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->_currentStream, CURLINFO_HEADER_OUT, true);
+        curl_setopt($this->_currentStream, CURLOPT_HEADER, true);
+        if ($this->_sslCA) {
+            curl_setopt($this->_currentStream, CURLOPT_CAINFO, $this->_sslCA);
+        }
+        // every time we receive a chunk of data, forward it to httpStreamReceive
+        curl_setopt($this->_currentStream, CURLOPT_WRITEFUNCTION, array($this, 'httpStreamReceive'));
+        // curl_exec($ch);
+        // return;
+        $this->_multiStream = curl_multi_init();
+        $this->_lastStreamActivity = time();
+        curl_multi_add_handle($this->_multiStream,$this->_currentStream);
+    }
+    
+    public function reconnectStream() {
+        $this->closeStream();
+        $this->_connectFailCounter++;
+        // if we've failed a few times, back off
+        if ($this->_connectFailCounter>1) {
+            $sleepTime = pow(2,$this->_connectFailCounter);
+            // don't sleep more than 60 seconds
+            if ($sleepTime>60) {
+                $sleepTime = 60;
+            }
+            sleep($sleepTime);
+        }
+        $this->httpStream('get',$this->_streamUrl);
+    }
+    
+    /**
+     * Process an open stream for x microseconds, then return. This is useful if you want
+     * to be doing other things while processing the stream. If you just want to
+     * consume the stream without other actions, you can call processForever() instead.
+     * @param float @microseconds The number of microseconds to process for before
+     * returning. There are 1,000,000 microseconds in a second.
+     *
+     * @return void
+     */
+    public function processStream($microseconds=null) {
+        if (!$this->_multiStream) {
+            throw new phpnutException('You must open a stream before calling processStream()');
+        }
+        $start = microtime(true);
+        $active = null;
+        $inQueue = null;
+        $sleepFor = 0;
+        do {
+            // if we haven't received anything within 5.5 minutes, reconnect
+            // keepalives are sent every 5 minutes (measured on 2013-3-12 by @ryantharp)
+            if (time()-$this->_lastStreamActivity>=330) {
+                $this->reconnectStream();
+            }
+            curl_multi_exec($this->_multiStream, $active);
+            if (!$active) {
+                $httpCode = curl_getinfo($this->_currentStream,CURLINFO_HTTP_CODE);
+                // don't reconnect on 400 errors
+                if ($httpCode>=400 && $httpCode<=499) {
+                    throw new phpnutException('Received HTTP error '.$httpCode.' check your URL and credentials before reconnecting');
+                }
+                $this->reconnectStream();
+            }
+            // sleep for a max of 2/10 of a second
+            $timeSoFar = (microtime(true)-$start)*1000000;
+            $sleepFor = $this->streamingSleepFor;
+            if ($timeSoFar+$sleepFor>$microseconds) {
+                $sleepFor = $microseconds - $timeSoFar;
+            }
+            if ($sleepFor>0) {
+                usleep($sleepFor);
+            }
+        } while ($timeSoFar+$sleepFor<$microseconds);
+    }
+    
+    /**
+     * Process an open stream forever. This function will never return, if you
+     * want to perform other actions while consuming the stream, you should use
+     * processFor() instead.
+     * @return void This function will never return
+     * @see processFor();
+     */
+    public function processStreamForever() {
+        while (true) {
+            $this->processStream(600);
+        }
+    }
+}
