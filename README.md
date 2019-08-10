@@ -133,7 +133,7 @@ print_r($posts);
 
 
 
-#### For applications using client ID and client secret
+### Applications using client ID and client secret
 
 First construct your authentication url.
 ```php
@@ -193,7 +193,7 @@ $app->createPost('Hello world');
 ```
 
 
-#### App streams (websocket)
+### App streams (websocket)
 
 To consume the stream, try something like:
 
@@ -258,6 +258,7 @@ A git repository of it [is also available](https://github.com/pnut-api/api-spec)
 ## Prerequisites
 
 * PHP >= 7.0
+
 
 ## Contributors
 
