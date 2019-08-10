@@ -245,6 +245,8 @@ More info on the pnut.io API [here](https://docs.pnut.io).
 
 A git repository of it [is also available](https://github.com/pnut-api/api-spec).
 
+For individual help, ask questions in the [Developer chat](https://patter.chat/18).
+
 
 ## Prerequisites
 
