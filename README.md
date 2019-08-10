@@ -1,24 +1,30 @@
 phpnut
 ======
 
-PHP library for the pnut.io Stream API
+PHP library for the pnut.io API.
 
-More info on the pnut.io Stream API <a href="https://github.com/pnut-api/api-spec">here</a>
+More info on the pnut.io API [here](https://docs.pnut.io), and a git repository of it [is also available](https://github.com/pnut-api/api-spec).
 
-**Contributors:**
-* <a href="https://alpha.app.net/jdolitsky" target="_blank">@jdolitsky</a>
-* <a href="https://pnut.io/@ravisorg" target="_blank">@ravisorg</a>
-* <a href="https://github.com/wpstudio" target="_blank">@wpstudio</a>
-* <a href="https://alpha.app.net/harold" target="_blank">@harold</a>
-* <a href="https://alpha.app.net/hxf148" target="_blank">@hxf148</a>
-* <a href="https://alpha.app.net/edent" target="_blank">@edent</a>
-* <a href="https://pnut.io/@c" target="_blank">@cdn</a>
-* <a href="https://pnut.io/@ryantharp" target="_blank">@ryantharp</a>
-* <a href="https://pnut.io/@33mhz" target="_blank">@33MHz</a>
+Installation:
+--------
+
+You can install **phpnut** via composer or by downloading the source.
+
+#### Via Composer:
+
+**phpnut** is available on Packagist as the [`pnut-api/phpnut`](http://packagist.org/packages/pnut-api/phpnut) package:
+
+```
+composer require pnut-api/phpnut
+```
 
 Usage:
 --------
-### EZphpnut
+
+To include the library in your project, you may use normal autoloading if your project users [Composer](https://getcomposer.org/). Otherwise, you can also `require_once 'phpnut.php';` or `require_once 'ezphpnut.php'`.
+
+
+## EZphpnut
 
 If you are planning to design an app for viewing within a browser that requires a login screen etc, this is a great place to start. This aims to hide all the nasty authentication stuff from the average developer. It is also recommended that you start here if you have never worked with OAuth and/or APIs before.
 
@@ -55,15 +61,84 @@ if ($app->getSession()) {
 A basic working example of ezphpnut is contained in the **ez-example** directory - see the <a href="./ez-example/README.md">README.md</a> in that directory for more info.
 
 
-### phpnut
+## phpnut
 
 Use this class if you need more control of your application (such as running a command line process) or are integrating your code with an existing application that handles sessions/cookies in a different way.
+
+
+### Credentials
+
+If you already have an access token (in a cron job for example):
+
+```php
+<?php
+
+require_once __DIR__.'/vendor/autoload.php';
+
+$access_token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+
+// construct the phpnut object
+$app = new phpnut($access_token);
+
+?>
+```
+
+If you have client credentials:
+
+```php
+<?php
+
+require_once __DIR__.'/vendor/autoload.php';
+
+$clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+$clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+
+// construct the phpnut object
+$app = new phpnut($clientId, $clientSecret);
+
+?>
+```
+
+If they are not given explicitly, the library will look for constants:
+
+```php
+<?php
+
+require_once __DIR__.'/vendor/autoload.php';
+
+// define('PNUT_ACCESS_TOKEN', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('PNUT_CLIENT_ID', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('PNUT_CLIENT_SECRET', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+
+// construct the phpnut object
+$app = new phpnut();
+
+?>
+```
+
+
+### Simple examples
+
+
+#### Make a call
+
+```php
+$posts = $app->searchHashtags('mndp');
+
+print_r($posts);
+```
+
+
+
+#### For applications using client ID and client secret
 
 First construct your authentication url.
 ```php
 <?php
 
-require_once 'phpnut.php';
+require_once __DIR__.'/vendor/autoload.php';
+
+// or require_once 'phpnut.php';
 
 // change these to your app's values
 $clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
@@ -73,17 +148,21 @@ $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 $app = new phpnut($clientId,$clientSecret);
 
 $redirectUri  = 'http://localhost/callback.php';
-$scope        =  array('stream','email','write_post','follow','messages','update_profile','presence');
+$scope        =  ['stream','email','write_post','follow','messages','update_profile','presence'];
 
 // create an authentication Url
 $url = $app->getAuthUrl($redirectUri,$scope);
 
 ?>
 ```
+
 Once the user has authenticated the app, grab the token in the callback script, and get information about the user.
+
 ```php
 <?php
+
 require_once 'phpnut.php';
+
 $app = new phpnut($clientId,$clientSecret);
 
 // get the token returned by App.net
@@ -98,7 +177,9 @@ $userId = $user['id'];
 
 ?>
 ```
+
 Save the token and user id in a database or elsewhere, then make API calls in future scripts after setting the token.
+
 ```php
 <?php
 
@@ -110,7 +191,11 @@ $app->createPost('Hello world');
 ?>
 ```
 
+
+#### App Streams (websocket)
+
 To consume the stream, try something like:
+
 ```php
 <?php
 
@@ -124,7 +209,7 @@ $token = $app->getAppAccessToken();
 // create a stream
 // if you already have a stream you can skip this step
 // this stream is going to consume posts and stars (but not follows)
-$stream = $app->createStream(array('post','star','user_follow','stream_marker','message','channel','channel_subscription','mute','token','file'));
+$stream = $app->createStream(array('post','bookmark','user_follow','stream_marker','message','channel','channel_subscription','mute','token','file'));
 // you might want to save $stream['endpoint'] or $stream['id'] for later so
 // you don't have to re-create the stream
 
@@ -136,8 +221,8 @@ function handleEvent($event) {
 		case 'post':
 			print "Handle a post type\n";
 			break;
-		case 'star':
-			print "Handle a star type\n";
+		case 'bookmark':
+			print "Handle a bookmark type\n";
 			break;
 	}
 }
@@ -161,6 +246,19 @@ while (true) {
 }
 ?>
 ```
+
+
+**Contributors:**
+* <a href="https://alpha.app.net/jdolitsky" target="_blank">@jdolitsky</a>
+* <a href="https://pnut.io/@ravisorg" target="_blank">@ravisorg</a>
+* <a href="https://github.com/wpstudio" target="_blank">@wpstudio</a>
+* <a href="https://alpha.app.net/harold" target="_blank">@harold</a>
+* <a href="https://alpha.app.net/hxf148" target="_blank">@hxf148</a>
+* <a href="https://alpha.app.net/edent" target="_blank">@edent</a>
+* <a href="https://pnut.io/@c" target="_blank">@cdn</a>
+* <a href="https://pnut.io/@ryantharp" target="_blank">@ryantharp</a>
+* <a href="https://pnut.io/@33mhz" target="_blank">@33MHz</a>
+
 
 Copyright (c) 2013, Josh Dolitsky
 All rights reserved.
