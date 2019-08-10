@@ -16,9 +16,31 @@ You can install **phpnut** via composer or by downloading the source.
 composer require pnut-api/phpnut
 ```
 
+To include the library in your project, you may use normal autoloading similar to `require_once __DIR__.'/vendor/autoload.php';` if your project uses [Composer](https://getcomposer.org/). Otherwise, you can also `require_once 'phpnut.php';` or `require_once 'ezphpnut.php'`.
+
+
 ## Usage
 
-To include the library in your project, you may use normal autoloading if your project uses [Composer](https://getcomposer.org/). Otherwise, you can also `require_once 'phpnut.php';` or `require_once 'ezphpnut.php'`.
+### Quick examples
+
+
+#### Create a post
+
+```php
+$app = new phpnut\phpnut($accessToken);
+
+$app->createPost('Hello world', ['reply_to' => 123]);
+```
+
+#### Search for a tag
+
+```php
+$app = new phpnut\phpnut($clientId, $clientSecret);
+
+$posts = $app->searchHashtags('mndp');
+
+print_r($posts);
+```
 
 
 ## EZphpnut
@@ -28,9 +50,7 @@ If you are planning to design an app for viewing within a browser that requires 
 ```php
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-
-$app = new phpnut\EZphpnut();
+$app = new phpnut\ezphpnut();
 
 // check that the user is signed in
 if ($app->getSession()) {
@@ -70,12 +90,10 @@ If you already have an access token (in a cron job for example):
 ```php
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-
-$access_token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+$accessToken = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
 // construct the phpnut object
-$app = new phpnut\phpnut($access_token);
+$app = new phpnut\phpnut($accessToken);
 
 ?>
 ```
@@ -85,13 +103,11 @@ If you have client credentials:
 ```php
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-
 $clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // from https://pnut.io/dev
 $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
 // construct the phpnut object
-$app = new phpnut($clientId, $clientSecret);
+$app = new phpnut\phpnut($clientId, $clientSecret);
 
 ?>
 ```
@@ -101,34 +117,14 @@ You can alternatively use constants:
 ```php
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-
 // define('PNUT_ACCESS_TOKEN', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 define('PNUT_CLIENT_ID', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 define('PNUT_CLIENT_SECRET', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
 // construct the phpnut object
-$app = new phpnut();
+$app = new phpnut\phpnut();
 
 ?>
-```
-
-
-### Quick examples
-
-
-#### Create a post
-
-```php
-$app->createPost('Hello world', ['reply_to' => 123]);
-```
-
-#### Search for a tag
-
-```php
-$posts = $app->searchHashtags('mndp');
-
-print_r($posts);
 ```
 
 
@@ -139,14 +135,12 @@ First construct your authentication url.
 ```php
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-
 // change these to your app's values
 $clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
 // construct the phpnut object
-$app = new phpnut($clientId,$clientSecret);
+$app = new phpnut\phpnut($clientId,$clientSecret);
 
 $redirectUri  = 'http://localhost/callback.php';
 $scope        = ['stream','email','write_post','follow','messages','update_profile','presence'];
@@ -162,9 +156,7 @@ Once the user has authenticated the app, grab the token in the callback script, 
 ```php
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-
-$app = new phpnut($clientId,$clientSecret);
+$app = new phpnut\phpnut($clientId,$clientSecret);
 
 // get the token returned by Pnut
 // (this also sets the token)
@@ -200,8 +192,7 @@ To consume the stream, try something like:
 ```php
 <?php
 
-require_once 'phpnut.php';
-$app = new phpnut($clientId,$clientSecret);
+$app = new phpnut\phpnut($clientId,$clientSecret);
 
 // You need an app token to consume the stream, get the token returned by App.net
 // (this also sets the token)
