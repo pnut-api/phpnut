@@ -107,7 +107,7 @@ class phpnut {
      * @param string $client_secret The client secret you received from
      * pnut.io when creating your app.
      */
-    public function __construct($client_id_or_token,$client_secret) {
+    public function __construct($client_id_or_token, $client_secret) {
         if (!$client_id_or_token) {
             if (defined('PNUT_ACCESS_TOKEN')) {
                 $client_id_or_token = PNUT_ACCESS_TOKEN;
@@ -159,7 +159,7 @@ class phpnut {
      * messages, and export. If you don't specify anything, you'll only receive
      * access to the user's basic profile (the default).
      */
-    public function getAuthUrl($callback_uri,$scope=null) {
+    public function getAuthUrl(string $callback_uri, $scope=null) {
 
         if (empty($this->_clientId)) {
             throw new phpnutException('You must specify your pnut client ID');
@@ -181,7 +181,7 @@ class phpnut {
         $url .= $this->buildQueryString($data);
 
         if ($scope) {
-            $url .= '&scope='.implode('+',$scope);
+            $url .= '&scope='.implode(',',$scope);
         }
 
         // return the constructed url
@@ -193,7 +193,7 @@ class phpnut {
      * token. For example, you could store it in a database and use
      * setAccessToken() later on to return on behalf of the user.
      */
-    public function getAccessToken($callback_uri) {
+    public function getAccessToken(string $callback_uri) {
         // if there's no access token set, and they're returning from
         // the auth page with a code, use the code to get a token
         if (!$this->_accessToken && isset($_GET['code']) && $_GET['code']) {
@@ -208,7 +208,7 @@ class phpnut {
                 'client_secret'=>$this->_clientSecret,
                 'grant_type'=>'authorization_code',
                 'redirect_uri'=>$callback_uri,
-                'code'=>$_GET['code']
+                'code'=>$_GET['code'],
             ];
 
             // try and fetch the token with the above data
@@ -228,7 +228,7 @@ class phpnut {
      * Check the scope of current token to see if it has required scopes
      * has to be done after a check
      */
-    public function checkScopes($app_scopes) {
+    public function checkScopes(array $app_scopes) {
         if (!count($this->_scopes)) {
             return -1; // _scope is empty
         }
@@ -258,7 +258,7 @@ class phpnut {
      * @param string $token A valid access token you're previously received
      * from calling getAccessToken().
      */
-    public function setAccessToken($token) {
+    public function setAccessToken(string $token) {
         $this->_accessToken = $token;
     }
 
@@ -396,7 +396,7 @@ class phpnut {
      * Internal function. Used to turn things like TRUE into 1, and then
      * calls http_build_query.
      */
-    protected function buildQueryString($array) {
+    protected function buildQueryString(array $array) {
         foreach ($array as $k=>&$v) {
             if (is_array($v)) {
                 $v = implode(',', $v);
@@ -416,9 +416,9 @@ class phpnut {
      * Internal function to handle all
      * HTTP requests (POST,PUT,GET,DELETE)
      */
-    protected function httpReq($act, $req, $params=[],$contentType='application/x-www-form-urlencoded') {
+    protected function httpReq(string $act, $req, array $params=[], string $contentType='application/x-www-form-urlencoded') {
         $ch = curl_init($req);
-        $headers = array();
+        $headers = [];
         if($act != 'get') {
             curl_setopt($ch, CURLOPT_POST, true);
             // if they passed an array, build a list of parameters from it
@@ -426,7 +426,7 @@ class phpnut {
                 $params = $this->buildQueryString($params);
             }
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-            $headers[] = "Content-Type: ".$contentType;
+            $headers[] = 'Content-Type: '.$contentType;
         }
         if($act != 'post' && $act != 'post-raw') {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($act));
@@ -509,7 +509,7 @@ class phpnut {
         }
 
         else {
-            throw new phpnutException("No response");
+            throw new phpnutException('No response');
         }
     }
 
@@ -564,7 +564,7 @@ class phpnut {
      * in the URL (such as 'include_raw')
      * @return array An associative array representing the post.
      */
-    public function processText($text=null, $data = [], $params = []) {
+    public function processText($text=null, array $data=[], array $params=[]) {
         $data['text'] = $text;
         $json = json_encode($data);
         $qs = '';
@@ -588,7 +588,7 @@ class phpnut {
      * in the URL (such as 'include_raw')
      * @return array An associative array representing the post.
      */
-    public function createPost($text=null, $data = [], $params = []) {
+    public function createPost($text=null, array $data=[], array $params=[]) {
         $data['text'] = $text;
         $json = json_encode($data);
         $qs = '';
@@ -606,7 +606,7 @@ class phpnut {
      * are: include_raw.
      * @return array An associative array representing the post
      */
-    public function getPost($post_id=null,$params = []) {
+    public function getPost(int $post_id, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id)
                         .'?'.$this->buildQueryString($params));
     }
@@ -617,7 +617,7 @@ class phpnut {
      * @param integer $post_id The ID of the post to delete
      * @param array An associative array representing the post that was deleted
      */
-    public function deletePost($post_id=null) {
+    public function deletePost(int $post_id) {
         return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id));
     }
 
@@ -630,7 +630,7 @@ class phpnut {
      * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function getPostThread($post_id=null,$params = []) {
+    public function getPostThread(int $post_id, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id)
                 .'/thread?'.$this->buildQueryString($params));
     }
@@ -647,7 +647,7 @@ class phpnut {
      * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function getUserPosts($user_id='me', $params = []) {
+    public function getUserPosts($user_id='me', array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id)
                     .'/posts?'.$this->buildQueryString($params));
     }
@@ -664,7 +664,7 @@ class phpnut {
      * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function getUserMentions($user_id='me',$params = []) {
+    public function getUserMentions($user_id='me', array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/'
             .urlencode($user_id).'/mentions?'.$this->buildQueryString($params));
     }
@@ -678,7 +678,7 @@ class phpnut {
      * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function getUserStream($params = []) {
+    public function getUserStream(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'posts/streams/me?'.$this->buildQueryString($params));
     }
 
@@ -691,7 +691,7 @@ class phpnut {
      * are: include_raw|include_user_raw.
      * @return array An associative array representing the user data.
      */
-    public function getUser($user_id='me', $params = []) {
+    public function getUser($user_id='me', array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id)
                         .'?'.$this->buildQueryString($params));
     }
@@ -703,8 +703,8 @@ class phpnut {
      * are: include_raw|include_user_raw.
      * @return array An associative array representing the users data.
      */
-    public function getUsers($user_arr, $params = []) {
-        return $this->httpReq('get',$this->_baseUrl.'users?ids='.join(',',$user_arr)
+    public function getUsers(array $user_arr, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users?ids='.implode(',',$user_arr)
                     .'&'.$this->buildQueryString($params));
     }
 
@@ -714,7 +714,7 @@ class phpnut {
      * @param integer $user_id The user ID of the user to follow.
      * @return array An associative array representing the user you just followed.
      */
-    public function followUser($user_id=null) {
+    public function followUser(int $user_id) {
         return $this->httpReq('put',$this->_baseUrl.'users/'.urlencode($user_id).'/follow');
     }
 
@@ -724,7 +724,7 @@ class phpnut {
      * @param integer $user_id The user ID of the user to unfollow.
      * @return array An associative array representing the user you just unfollowed.
      */
-    public function unfollowUser($user_id=null) {
+    public function unfollowUser(int $user_id) {
         return $this->httpReq('delete',$this->_baseUrl.'users/'.urlencode($user_id).'/follow');
     }
 
@@ -783,15 +783,15 @@ class phpnut {
      * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function getPublicPosts($params = []) {
+    public function getPublicPosts(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'posts/streams/global?'.$this->buildQueryString($params));
     }
 
     /**
      * List User interactions
      */
-    public function getMyActions($params = []) {
-        return $this->httpReq('get',$this->_baseUrl.'users/me/actions?'.$this->buildQueryString($params));
+    public function getMyActions(array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/me/interactions?'.$this->buildQueryString($params));
     }
 
     /**
@@ -800,7 +800,7 @@ class phpnut {
      * an @ symbol at the beginning.
      * @return integer The user's user ID
      */
-    public function getIdByUsername($username=null) {
+    public function getIdByUsername(string $username) {
         return $this->httpReq('get',$this->_baseUrl.'users/@'.$username.'?include_user_as_id=1');
     }
 
@@ -808,7 +808,7 @@ class phpnut {
      * Mute a user
      * @param integer $user_id The user ID to mute
      */
-    public function muteUser($user_id=null) {
+    public function muteUser($user_id) {
          return $this->httpReq('put',$this->_baseUrl.'users/'.urlencode($user_id).'/mute');
     }
 
@@ -816,7 +816,7 @@ class phpnut {
      * Unmute a user
      * @param integer $user_id The user ID to unmute
      */
-    public function unmuteUser($user_id=null) {
+    public function unmuteUser($user_id) {
         return $this->httpReq('delete',$this->_baseUrl.'users/'.urlencode($user_id).'/mute');
     }
 
@@ -832,7 +832,7 @@ class phpnut {
     * Bookmark a post
     * @param integer $post_id The post ID to bookmark
     */
-    public function bookmarkPost($post_id=null) {
+    public function bookmarkPost(int $post_id) {
         return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).'/bookmark');
     }
 
@@ -840,7 +840,7 @@ class phpnut {
     * Unbookmark a post
     * @param integer $post_id The post ID to unbookmark
     */
-    public function unbookmarkPost($post_id=null) {
+    public function unbookmarkPost(int $post_id) {
         return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id).'/bookmark');
     }
 
@@ -854,7 +854,7 @@ class phpnut {
     * @return array An array of associative arrays, each representing a single
     * user who has bookmarked a post
     */
-    public function getBookmarked($user_id='me', $params = []) {
+    public function getBookmarked($user_id='me', array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id).'/bookmarks'
                     .'?'.$this->buildQueryString($params));
     }
@@ -864,8 +864,8 @@ class phpnut {
     * @param integer $post_id the post ID to get stars from
     * @return array An array of associative arrays, each representing one bookmark action.
     */
-    public function getPostBookmarks($post_id=null) {
-        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/actions?filter=bookmark');
+    public function getPostBookmarks(int $post_id) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/interactions?filter=bookmark');
     }
 
     /**
@@ -874,8 +874,8 @@ class phpnut {
      * @return array An array of associative arrays, each representing a single
      * user who reposted $post_id
      */
-    public function getPostReposts($post_id){
-        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/actions?filter=repost');
+    public function getPostReposts(int $post_id) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id).'/interactions?filter=repost');
     }
 
     /**
@@ -883,7 +883,7 @@ class phpnut {
      * @param integer $post_id The id of the post
      * @return the reposted post
      */
-    public function repost($post_id){
+    public function repost(int $post_id) {
         return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).'/repost');
     }
 
@@ -892,7 +892,7 @@ class phpnut {
      * @param integer $post_id The id of the post
      * @return the un-reposted post
      */
-    public function deleteRepost($post_id){
+    public function deleteRepost(int $post_id) {
         return $this->httpReq('delete',$this->_baseUrl.'posts/'.urlencode($post_id).'/repost');
     }
 
@@ -905,7 +905,7 @@ class phpnut {
      * include_directed_posts, and include_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function searchHashtags($hashtag=null, $params = []) {
+    public function searchHashtags(string $hashtag, array $params=[]) {
         return $this->httpReq('get', $this->_baseUrl . 'posts/tags/' . urlencode($hashtag) . '?' . $this->buildQueryString($params));
     }
 
@@ -918,7 +918,7 @@ class phpnut {
      * @return array An array of associative arrays, each representing one post.
      * or false on error
      */
-    public function searchPosts($params = [], $query='', $order='default') {
+    public function searchPosts(array $params=[], string $query='', string $order='default') {
         if (!is_array($params)) {
             return false;
         }
@@ -944,7 +944,7 @@ class phpnut {
      * @return array An array of associative arrays, each representing one channel.
      * or false on error
      */
-    public function searchChannels($params=[], $query='', $order='default') {
+    public function searchChannels(array $params=[], string $query='', string $order='default') {
         if (!is_array($params)) {
             return false;
         }
@@ -969,7 +969,7 @@ class phpnut {
      * @return array An array of associative arrays, each representing one channel.
      * or false on error
      */
-    public function searchMessages($params=[], $query='', $order='default') {
+    public function searchMessages(array $params=[], string $query='', string $order='default') {
         if (!is_array($params)) {
             return false;
         }
@@ -992,7 +992,7 @@ class phpnut {
      * Does not search posts.
      * @return array An array of associative arrays, each representing one user.
      */
-    public function searchUsers($params=[], $query='') {
+    public function searchUsers(array $params=[], string $query='') {
         if (!is_array($params)) {
             return false;
         }
@@ -1008,7 +1008,7 @@ class phpnut {
      * @param string $name the @name to get
      * @return array representing one user
      */
-    public function getUserByName($name=null) {
+    public function getUserByName(string $name) {
         return $this->httpReq('get', $this->_baseUrl . 'users/@' . $name);
     }
 
@@ -1020,7 +1020,7 @@ class phpnut {
      * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
-    public function getUserPersonalStream($params = []) {
+    public function getUserPersonalStream(array $params=[]) {
         if ($params['access_token']) {
             return $this->httpReq('get',$this->_baseUrl.'posts/streams/me?'.$this->buildQueryString($params),$params);
         } else {
@@ -1037,7 +1037,7 @@ class phpnut {
     * include_directed_posts, and include_raw.
     * @return An array of associative arrays, each representing a single post.
     */
-    public function getUserUnifiedStream($params = []) {
+    public function getUserUnifiedStream(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'posts/streams/unified?'.$this->buildQueryString($params));
     }
 
@@ -1045,7 +1045,7 @@ class phpnut {
      * Update Profile Data via JSON
      * @data array containing user descriptors
      */
-    public function updateUserData($data = [], $params = []) {
+    public function updateUserData(array $data=[], array $params=[]) {
         $json = json_encode($data);
         return $this->httpReq('put',$this->_baseUrl.'users/me'.'?'.
                         $this->buildQueryString($params), $json, 'application/json');
@@ -1056,25 +1056,23 @@ class phpnut {
      * @which avatar|cover
      * @image path reference to image
      */
-    protected function updateUserImage($which = 'avatar', $image = null) {
+    protected function updateUserImage(string $which='avatar', $image) {
         $data = array($which=>"@$image");
         return $this->httpReq('post-raw',$this->_baseUrl.'users/me/'.$which, $data, 'multipart/form-data');
     }
 
-    public function updateUserAvatar($avatar = null) {
-        if($avatar != null)
-            return $this->updateUserImage('avatar', $avatar);
+    public function updateUserAvatar($avatar) {
+        return $this->updateUserImage('avatar', $avatar);
     }
 
-    public function updateUserCover($cover = null) {
-        if($cover != null)
-            return $this->updateUserImage('cover', $cover);
+    public function updateUserCover($cover) {
+        return $this->updateUserImage('cover', $cover);
     }
 
     /**
      * update stream marker
      */
-    public function updateStreamMarker($data = []) {
+    public function updateStreamMarker(array $data=[]) {
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'markers', $json, 'application/json');
     }
@@ -1082,14 +1080,14 @@ class phpnut {
     /**
      * get a page of current user subscribed channels
      */
-    public function getMyChannelSubscriptions($params = []) {
+    public function getMyChannelSubscriptions(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/me/channels/subscribed?'.$this->buildQueryString($params));
     }
 
     /**
      * get user channels
      */
-    public function getMyChannels($params = []) {
+    public function getMyChannels(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/me/channels?'.$this->buildQueryString($params));
     }
 
@@ -1097,7 +1095,7 @@ class phpnut {
      * create a channel
      * note: you cannot create a channel with type=io.pnut.core.pm (see createMessage)
      */
-    public function createChannel($data = []) {
+    public function createChannel(array $data=[]) {
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'channels'.($pm?'/pm/messsages':''), $json, 'application/json');
     }
@@ -1105,21 +1103,21 @@ class phpnut {
     /**
      * get channelid info
      */
-    public function getChannel($channelid, $params = []) {
+    public function getChannel(int $channelid, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'?'.$this->buildQueryString($params));
     }
 
     /**
      * get multiple channels' info by an array of channelids
      */
-    public function getChannels($channels, $params = []) {
-        return $this->httpReq('get',$this->_baseUrl.'channels?ids='.join(',',$channels).'&'.$this->buildQueryString($params));
+    public function getChannels(array $channels, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'channels?ids='.implode(',',$channels).'&'.$this->buildQueryString($params));
     }
 
     /**
      * update channelid
      */
-    public function updateChannel($channelid, $data = []) {
+    public function updateChannel(int $channelid, array $data=[]) {
         $json = json_encode($data);
         return $this->httpReq('put',$this->_baseUrl.'channels/'.$channelid, $json, 'application/json');
     }
@@ -1127,35 +1125,35 @@ class phpnut {
     /**
      * subscribe from channelid
      */
-    public function channelSubscribe($channelid) {
+    public function channelSubscribe(int $channelid) {
         return $this->httpReq('put',$this->_baseUrl.'channels/'.$channelid.'/subscribe');
     }
 
     /**
      * unsubscribe from channelid
      */
-    public function channelUnsubscribe($channelid) {
+    public function channelUnsubscribe(int $channelid) {
         return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid.'/subscribe');
     }
 
     /**
      * get all user objects subscribed to channelid
      */
-    public function getChannelSubscriptions($channelid, $params = []) {
+    public function getChannelSubscriptions(int $channelid, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'channel/'.$channelid.'/subscribers?'.$this->buildQueryString($params));
     }
 
     /**
      * get all user IDs subscribed to channelid
      */
-    public function getChannelSubscriptionsById($channelid) {
+    public function getChannelSubscriptionsById(int $channelid) {
         return $this->httpReq('get',$this->_baseUrl.'channel/'.$channelid.'/subscribers?include_user_as_id=1');
     }
     
     /**
      * mark channel inactive
      */
-    public function deleteChannel($channelid) {
+    public function deleteChannel(int $channelid) {
         return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid);
     }
 
@@ -1163,7 +1161,7 @@ class phpnut {
     /**
      * get a page of messages in channelid
      */
-    public function getMessages($channelid, $params = []) {
+    public function getMessages(int $channelid, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/messages?'.$this->buildQueryString($params));
     }
 
@@ -1172,7 +1170,7 @@ class phpnut {
      * @param $channelid numeric or "pm" for auto-chanenl (type=io.pnut.core.pm)
      * @param $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
      */
-    public function createMessage($channelid,$data) {
+    public function createMessage(int $channelid, array $data) {
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'channels/'.$channelid.'/messages', $json, 'application/json');
     }
@@ -1180,14 +1178,14 @@ class phpnut {
     /**
      * get message
      */
-    public function getMessage($channelid,$messageid) {
+    public function getMessage(int $channelid, int $messageid) {
         return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid);
     }
 
     /**
      * delete messsage
      */
-    public function deleteMessage($channelid,$messageid) {
+    public function deleteMessage(int $channelid, int $messageid) {
         return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid);
     }
     
@@ -1200,7 +1198,7 @@ class phpnut {
 			$this->getAppAccessToken();
 		}
 		// ensure request is made with our appAccessToken
-		$params['access_token']=$this->_appAccessToken;
+		$params['access_token'] = $this->_appAccessToken;
 		return $this->httpReq('get',$this->_baseUrl.'token',$params);
 	}
     
@@ -1220,7 +1218,7 @@ class phpnut {
 			$this->getAppAccessToken();
 		}
 		// ensure request is made with our appAccessToken
-		$params['access_token']=$this->_appAccessToken;
+		$params['access_token'] = $this->_appAccessToken;
 		return $this->httpReq('get',$this->_baseUrl.'apps/me/users/ids',$params);
 	}
     
@@ -1233,7 +1231,7 @@ class phpnut {
 			$this->getAppAccessToken();
 		}
 		// ensure request is made with our appAccessToken
-		$params['access_token']=$this->_appAccessToken;
+		$params['access_token'] = $this->_appAccessToken;
 		return $this->httpReq('get',$this->_baseUrl.'apps/me/users/tokens',$params);
 	}
     
@@ -1328,7 +1326,7 @@ class phpnut {
 	 * created with the current access token.
 	 * @return array A stream definition
 	 */
-	public function getStream($streamId) {
+	public function getStream(string $streamId) {
 		return $this->httpReq('get',$this->_baseUrl.'streams/'.urlencode($streamId));
 	}
     
@@ -1356,11 +1354,11 @@ class phpnut {
 	/**
 	 * Update stream for the current app access token
 	 *
-	 * @param integer $streamId The stream ID to update. This stream must have been
+	 * @param string $streamId The stream ID to update. This stream must have been
 	 * created by the current access token.
 	 * @param array $data allows object_types, type, filter_id and key to be updated. filter_id/key can be omitted
 	 */
-	public function updateStream($streamId,$data) {
+	public function updateStream(string $streamId, array $data) {
 		// objectTypes is likely required
 		if (is_null($data['object_types'])) {
 			$data['object_types'] = ['post','bookmark','user_follow'];
@@ -1377,10 +1375,10 @@ class phpnut {
 	/**
 	 * Deletes a stream if you no longer need it.
 	 *
-	 * @param integer $streamId The stream ID to delete. This stream must have been
+	 * @param string $streamId The stream ID to delete. This stream must have been
 	 * created by the current access token.
 	 */
-	public function deleteStream($streamId) {
+	public function deleteStream(string $streamId) {
 		return $this->httpReq('delete',$this->_baseUrl.'streams/'.urlencode($streamId));
 	}
     
@@ -1427,11 +1425,11 @@ class phpnut {
 	 * received to the httpStreamReceive function. As a general rule you should not
 	 * directly call this method, it's used by openStream().
 	 */
-	protected function httpStream($act, $req, $params=array(),$contentType='application/x-www-form-urlencoded') {
+	protected function httpStream(string $act, $req, array $params=[], string $contentType='application/x-www-form-urlencoded') {
 		if ($this->_currentStream) {
 			throw new phpnutException('There is already an open stream, you must close the existing one before opening a new one');
 		}
-		$headers = array();
+		$headers = [];
 		$this->_streamBuffer = '';
 		if ($this->_accessToken) {
 			$headers[] = 'Authorization: Bearer '.$this->_accessToken;
@@ -1445,7 +1443,7 @@ class phpnut {
 			curl_setopt($this->_currentStream, CURLOPT_CAINFO, $this->_sslCA);
 		}
 		// every time we receive a chunk of data, forward it to httpStreamReceive
-		curl_setopt($this->_currentStream, CURLOPT_WRITEFUNCTION, array($this, "httpStreamReceive"));
+		curl_setopt($this->_currentStream, CURLOPT_WRITEFUNCTION, array($this, 'httpStreamReceive'));
 		// curl_exec($ch);
 		// return;
 		$this->_multiStream = curl_multi_init();
@@ -1543,14 +1541,14 @@ class phpnut {
      * an image or not.
      * - If you don't specify name, phpnut will use the filename of the first
      * parameter.
-     * - If you don't specify public, your file will be uploaded as a private file.
+     * - If you don't specify is_public, your file will be uploaded as a private file.
      * - Type is REQUIRED.
      * @param array $params An associative array of optional general parameters.
      * This will likely change as the API evolves, as of this writing allowed keys
      * are: include_raw|include_file_raw.
      * @return array An associative array representing the file
      */
-    public function createFile($file, $data, $params=[]) {
+    public function createFile($file, array $data, array $params=[]) {
         if (!$file) {
             throw new PhpnutException('You must specify a path to a file');
         }
@@ -1559,9 +1557,6 @@ class phpnut {
         }
         if (!is_readable($file)) {
             throw new PhpnutException('File path specified is not readable');
-        }
-        if (!$data) {
-            $data = [];
         }
         if (!array_key_exists('type',$data) || !$data['type']) {
             throw new PhpnutException('Type is required when creating a file');
@@ -1595,23 +1590,18 @@ class phpnut {
         if (!$mimeType) {
             throw new PhpnutException('Unable to determine mime type of file, try specifying it explicitly');
         }
-        if (!array_key_exists('public',$data) || !$data['is_public']) {
-            $public = false;
-        } else {
-            $public = true;
-        }
         $data['content'] = new CurlFile($file, $mimeType);
         return $this->httpReq('post-raw',$this->_baseUrl.'files', $data, 'multipart/form-data');
     }
 
-    public function createFilePlaceholder($file = null, $params=[]) {
+    public function createFilePlaceholder($file, array $params=[]) {
         $name = basename($file);
         $data = ['raw' => $params['raw'], 'kind' => $params['kind'], 'name' => $name, 'type' => $params['metadata']];
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'files', $json, 'application/json');
     }
 
-    public function updateFileContent($fileid, $file) {
+    public function updateFileContent(int $fileid, string $file) {
         $data = file_get_contents($file);
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file);
@@ -1625,7 +1615,7 @@ class phpnut {
      * @param array $params An associative array of file parameters.
      * @return array An associative array representing the updated file
     */
-    public function updateFile($file_id=null, $params=[]) {
+    public function updateFile(int $file_id, array $params=[]) {
         $data = ['raw' => $params['raw'] , 'name' => $params['name']];
         $json = json_encode($data);
         return $this->httpReq('put',$this->_baseUrl.'files/'.urlencode($file_id), $json, 'application/json');
@@ -1639,16 +1629,16 @@ class phpnut {
      * are: include_raw|include_file_raw.
      * @return array An associative array representing the file
      */
-    public function getFile($file_id=null, $params=[]) {
+    public function getFile(int $file_id, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'files/'.urlencode($file_id).'?'.$this->buildQueryString($params));
     }
 
-    public function getFileContent($file_id=null, $params=[]) {
+    public function getFileContent(int $file_id, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'files/'.urlencode($file_id).'/content?'.$this->buildQueryString($params));
     }
 
     /** $file_key : derived_file_key */
-    public function getDerivedFileContent($file_id=null, $file_key=null, $params=[]) {
+    public function getDerivedFileContent(int $file_id, string $file_key, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'files/'.urlencode($file_id).'/content/'.urlencode($file_key).'?'.$this->buildQueryString($params));
     }
 
@@ -1660,7 +1650,7 @@ class phpnut {
      * are: include_raw|include_file_raw.
      * @return array An associative array representing the file data.
      */
-    public function getFiles($file_ids=[], $params=[]) {
+    public function getFiles(array $file_ids, array $params=[]) {
         $ids = '';
         foreach($file_ids as $id) {
             $ids .= $id . ',';
@@ -1676,7 +1666,7 @@ class phpnut {
      * are: include_raw|include_file_raw|include_user_raw.
      * @return array An associative array representing the file data.
      */
-    public function getUserFiles($params=[]) {
+    public function getUserFiles(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/me/files?'.$this->buildQueryString($params));
     }
 
@@ -1686,7 +1676,7 @@ class phpnut {
      * @param integer $file_id The ID of the file to delete
      * @return array An associative array representing the file that was deleted
      */
-    public function deleteFile($file_id=null) {
+    public function deleteFile(int $file_id) {
         return $this->httpReq('delete',$this->_baseUrl.'files/'.urlencode($file_id));
     }
 
@@ -1698,7 +1688,7 @@ class phpnut {
      * Allowed keys: include_raw,include_poll_raw, ...
      * @return array An associative array representing the poll
      */
-    public function createPoll($data=[], $params=[]) {
+    public function createPoll(array $data, array $params=[]) {
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'polls?'.$this->buildQueryString($params), $json, 'application/json');
     }
@@ -1709,7 +1699,7 @@ class phpnut {
      * @param integer $position The position of the poll response
      * @param array $params An associative array of optional general parameters.
      */
-    public function respondToPoll($poll_id=null, $position=null, $params=[]) {
+    public function respondToPoll(int $poll_id, int $position, array $params=[]) {
         return $this->httpReq('put',$this->_baseUrl.'polls/'.urlencode($poll_id).'/response/'.urlencode($position).'?'.$this->buildQueryString($params));
     }
 
@@ -1719,7 +1709,7 @@ class phpnut {
      * @param array $params An associative array of optional general parameters.
      * @return array An associative array representing the poll
      */
-    public function getPoll($poll_id=null, $params=[]) {
+    public function getPoll(int $poll_id, array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
     }
 
@@ -1728,7 +1718,7 @@ class phpnut {
      * @param array $params An associative array of optional general parameters.
      * @return array An associative array representing the poll data.
      */
-    public function getUserPolls($params=[]) {
+    public function getUserPolls(array $params=[]) {
         return $this->httpReq('get',$this->_baseUrl.'users/me/polls?'.$this->buildQueryString($params));
     }
 
@@ -1738,7 +1728,7 @@ class phpnut {
      * @param array $params An associative array of optional general parameters.
      * @return array An associative array representing the poll that was deleted
      */
-    public function deletePoll($poll_id=null, $params=[]) {
+    public function deletePoll(int $poll_id, array $params=[]) {
         return $this->httpReq('delete',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
     }
 }
