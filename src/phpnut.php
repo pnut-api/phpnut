@@ -1696,11 +1696,12 @@ class phpnut {
     /**
      * Responds to a poll.
      * @param integer $poll_id The ID of the poll to respond to
-     * @param integer $position The position of the poll response
+     * @param array list of positions for the poll response
      * @param array $params An associative array of optional general parameters.
      */
-    public function respondToPoll(int $poll_id, int $position, array $params=[]) {
-        return $this->httpReq('put',$this->_baseUrl.'polls/'.urlencode($poll_id).'/response/'.urlencode($position).'?'.$this->buildQueryString($params));
+    public function respondToPoll(int $poll_id, array $positions, array $params=[]) {
+        $json = json_encode(['positions' => $positions]);
+        return $this->httpReq('put',$this->_baseUrl.'polls/'.urlencode($poll_id).'/response?'.$this->buildQueryString($params), $json, 'application/json');
     }
 
     /**
