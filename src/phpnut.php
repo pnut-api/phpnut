@@ -923,7 +923,7 @@ class phpnut {
             return false;
         }
         if (!empty($query)) {
-            $params['query']=$query;
+            $params['q']=$query;
         }
         if ($order=='default') {
             if (!empty($query)) {
