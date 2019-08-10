@@ -1,12 +1,10 @@
-phpnut
-======
+# phpnut
 
 PHP library for the pnut.io API.
 
-More info on the pnut.io API [here](https://docs.pnut.io), and a git repository of it [is also available](https://github.com/pnut-api/api-spec).
 
-Installation:
---------
+## Installation
+
 
 You can install **phpnut** via composer or by downloading the source.
 
@@ -18,10 +16,9 @@ You can install **phpnut** via composer or by downloading the source.
 composer require pnut-api/phpnut
 ```
 
-Usage:
---------
+## Usage
 
-To include the library in your project, you may use normal autoloading if your project users [Composer](https://getcomposer.org/). Otherwise, you can also `require_once 'phpnut.php';` or `require_once 'ezphpnut.php'`.
+To include the library in your project, you may use normal autoloading if your project uses [Composer](https://getcomposer.org/). Otherwise, you can also `require_once 'phpnut.php';` or `require_once 'ezphpnut.php'`.
 
 
 ## EZphpnut
@@ -33,7 +30,7 @@ If you are planning to design an app for viewing within a browser that requires 
 
 require_once __DIR__.'/vendor/autoload.php';
 
-$app = new EZphpnut();
+$app = new phpnut\EZphpnut();
 
 // check that the user is signed in
 if ($app->getSession()) {
@@ -78,7 +75,7 @@ require_once __DIR__.'/vendor/autoload.php';
 $access_token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
 // construct the phpnut object
-$app = new phpnut($access_token);
+$app = new phpnut\phpnut($access_token);
 
 ?>
 ```
@@ -90,7 +87,7 @@ If you have client credentials:
 
 require_once __DIR__.'/vendor/autoload.php';
 
-$clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+$clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // from https://pnut.io/dev
 $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
 // construct the phpnut object
@@ -99,7 +96,7 @@ $app = new phpnut($clientId, $clientSecret);
 ?>
 ```
 
-If they are not given explicitly, the library will look for constants:
+You can alternatively use constants:
 
 ```php
 <?php
@@ -117,10 +114,16 @@ $app = new phpnut();
 ```
 
 
-### Simple examples
+### Quick examples
 
 
-#### Make a call
+#### Create a post
+
+```php
+$app->createPost('Hello world', ['reply_to' => 123]);
+```
+
+#### Search for a tag
 
 ```php
 $posts = $app->searchHashtags('mndp');
@@ -138,8 +141,6 @@ First construct your authentication url.
 
 require_once __DIR__.'/vendor/autoload.php';
 
-// or require_once 'phpnut.php';
-
 // change these to your app's values
 $clientId     = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
@@ -148,7 +149,7 @@ $clientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 $app = new phpnut($clientId,$clientSecret);
 
 $redirectUri  = 'http://localhost/callback.php';
-$scope        =  ['stream','email','write_post','follow','messages','update_profile','presence'];
+$scope        = ['stream','email','write_post','follow','messages','update_profile','presence'];
 
 // create an authentication Url
 $url = $app->getAuthUrl($redirectUri,$scope);
@@ -161,11 +162,11 @@ Once the user has authenticated the app, grab the token in the callback script, 
 ```php
 <?php
 
-require_once 'phpnut.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 $app = new phpnut($clientId,$clientSecret);
 
-// get the token returned by App.net
+// get the token returned by Pnut
 // (this also sets the token)
 $token = $app->getAccessToken($redirectUri);
 
@@ -185,14 +186,14 @@ Save the token and user id in a database or elsewhere, then make API calls in fu
 
 $app->setAccessToken($token);
 
-// post on behalf of the user w/ that token
+// post on behalf of the user with that token
 $app->createPost('Hello world');
 
 ?>
 ```
 
 
-#### App Streams (websocket)
+#### App streams (websocket)
 
 To consume the stream, try something like:
 
@@ -208,12 +209,12 @@ $token = $app->getAppAccessToken();
 
 // create a stream
 // if you already have a stream you can skip this step
-// this stream is going to consume posts and stars (but not follows)
-$stream = $app->createStream(array('post','bookmark','user_follow','stream_marker','message','channel','channel_subscription','mute','token','file'));
+// this stream is going to consume posts and bookmarks (but not follows)
+$stream = $app->createStream(['post','bookmark','user_follow','stream_marker','message','channel','channel_subscription','mute','token','file']);
 // you might want to save $stream['endpoint'] or $stream['id'] for later so
 // you don't have to re-create the stream
 
-// we need to create a callback function that will do something with posts/stars
+// we need to create a callback function that will do something with posts/bookmarks
 // when they're received from the stream. This function should accept one single
 // parameter that will be the php object containing the meta / data for the event.
 function handleEvent($event) {
@@ -247,8 +248,19 @@ while (true) {
 ?>
 ```
 
+## Documentation
 
-**Contributors:**
+More info on the pnut.io API [here](https://docs.pnut.io).
+
+A git repository of it [is also available](https://github.com/pnut-api/api-spec).
+
+
+## Prerequisites
+
+* PHP >= 7.0
+
+## Contributors
+
 * <a href="https://alpha.app.net/jdolitsky" target="_blank">@jdolitsky</a>
 * <a href="https://pnut.io/@ravisorg" target="_blank">@ravisorg</a>
 * <a href="https://github.com/wpstudio" target="_blank">@wpstudio</a>
@@ -258,29 +270,3 @@ while (true) {
 * <a href="https://pnut.io/@c" target="_blank">@cdn</a>
 * <a href="https://pnut.io/@ryantharp" target="_blank">@ryantharp</a>
 * <a href="https://pnut.io/@33mhz" target="_blank">@33MHz</a>
-
-
-Copyright (c) 2013, Josh Dolitsky
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the Josh Dolitsky nor the names of its 
-      contributors may be used to endorse or promote products derived 
-      from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL TRAVIS RICHARDSON BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
