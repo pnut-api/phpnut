@@ -416,7 +416,7 @@ class phpnut {
      * Internal function to handle all
      * HTTP requests (POST,PUT,GET,DELETE)
      */
-    protected function httpReq(string $act, $req, array $params=[], string $contentType='application/x-www-form-urlencoded') {
+    protected function httpReq(string $act, $req, $params=[], string $contentType='application/x-www-form-urlencoded') {
         $ch = curl_init($req);
         $headers = [];
         if($act != 'get') {
