@@ -294,7 +294,7 @@ class phpnut {
 			'grant_type'=>'client_credentials',
 		];
 		// try and fetch the token with the above data
-		$res = $this->httpReq('post',$this->_authUrl.'access_token', $data);
+		$res = $this->httpReq('post',$this->_baseUrl.'oauth/access_token', $data);
 		// store it for later
 		$this->_appAccessToken = $res['access_token'];
 		$this->_accessToken = $res['access_token'];
@@ -1172,7 +1172,7 @@ class phpnut {
      * @param $channelid numeric or "pm" for auto-chanenl (type=io.pnut.core.pm)
      * @param $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
      */
-    public function createMessage(int $channelid, array $data) {
+    public function createMessage($channelid, array $data) {
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'channels/'.$channelid.'/messages', $json, 'application/json');
     }
