@@ -168,7 +168,6 @@ $user = $app->getUser();
 // get the unique user id
 $userId = $user['id'];
 
-?>
 ```
 
 Save the token and user id in a database or elsewhere, then make API calls in future scripts after setting the token.
@@ -181,7 +180,6 @@ $app->setAccessToken($token);
 // post on behalf of the user with that token
 $app->createPost('Hello world');
 
-?>
 ```
 
 
@@ -194,14 +192,14 @@ To consume the stream, try something like:
 
 $app = new phpnut\phpnut($clientId,$clientSecret);
 
-// You need an app token to consume the stream, get the token returned by App.net
+// You need an app token to consume the stream, get the token returned by Pnut.io
 // (this also sets the token)
 $token = $app->getAppAccessToken();
 
 // create a stream
 // if you already have a stream you can skip this step
 // this stream is going to consume posts and bookmarks (but not follows)
-$stream = $app->createStream(['post','bookmark','user_follow','stream_marker','message','channel','channel_subscription','mute','token','file']);
+$stream = $app->createStream(['post','bookmark','follow']);
 // you might want to save $stream['endpoint'] or $stream['id'] for later so
 // you don't have to re-create the stream
 
@@ -209,14 +207,14 @@ $stream = $app->createStream(['post','bookmark','user_follow','stream_marker','m
 // when they're received from the stream. This function should accept one single
 // parameter that will be the php object containing the meta / data for the event.
 function handleEvent($event) {
-	switch ($event['meta']['type']) {
-		case 'post':
-			print "Handle a post type\n";
-			break;
-		case 'bookmark':
-			print "Handle a bookmark type\n";
-			break;
-	}
+    switch ($event['meta']['type']) {
+        case 'post':
+            print "Handle a post type\n";
+            break;
+        case 'bookmark':
+            print "Handle a bookmark type\n";
+            break;
+    }
 }
 
 // register that function as the stream handler
@@ -231,12 +229,11 @@ $app->openStream($stream['endpoint']);
 // otherwise you can create a loop, and call $app->processStream($milliseconds)
 // intermittently, like:
 while (true) {
-	print "hello, I'm going to do some other non-streaming things here...\n";
-	// now we're going to process the stream for awhile (3 seconds)
-	$app->processStream(3000000);
-	// then do something else...
+    print "hello, I'm going to do some other non-streaming things here...\n";
+    // now we're going to process the stream for awhile (3 seconds)
+    $app->processStream(3000000);
+    // then do something else...
 }
-?>
 ```
 
 ## Documentation
