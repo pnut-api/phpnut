@@ -1277,7 +1277,7 @@ class phpnut {
         if (!$mimeType) {
             throw new PhpnutException('Unable to determine mime type of file, try specifying it explicitly');
         }
-        $data['content'] = new CurlFile($file, $mimeType);
+        $data['content'] = new \CurlFile($file, $mimeType);
         return $this->httpReq('post-raw',$this->_baseUrl.'files', $data, 'multipart/form-data');
     }
 
