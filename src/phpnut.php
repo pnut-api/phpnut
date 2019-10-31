@@ -181,7 +181,11 @@ class phpnut {
         $url .= $this->buildQueryString($data);
 
         if ($scope) {
-            $url .= '&scope='.implode(',',$scope);
+            if (is_array($scope)) {
+                $url .= '&scope='.implode(',',$scope);
+            } else {
+                $url .= '&scope=' . $scope;
+            }
         }
 
         // return the constructed url
