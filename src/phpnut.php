@@ -262,7 +262,7 @@ class phpnut {
      * @param string $token A valid access token you're previously received
      * from calling getAccessToken().
      */
-    public function setAccessToken(string $token) {
+    public function setAccessToken($token) {
         $this->_accessToken = $token;
     }
 
