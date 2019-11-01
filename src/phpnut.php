@@ -1077,7 +1077,7 @@ class phpnut {
      */
     public function createChannel(array $data=[]) {
         $json = json_encode($data);
-        return $this->httpReq('post',$this->_baseUrl.'channels'.($pm?'/pm/messsages':''), $json, 'application/json');
+        return $this->httpReq('post',$this->_baseUrl.'channels', $json, 'application/json');
     }
 
     /**
