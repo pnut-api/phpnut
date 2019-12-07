@@ -922,8 +922,8 @@ class phpnut {
      * @return array An array of associative arrays, each representing a single
      * user following $user_id
      */
-    public function getFollowing($user_id='me') {
-        return $this->httpReq('get',$this->_baseUrl.'users/'.$user_id.'/following');
+    public function getFollowing($user_id='me', array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id).'/following?'.$this->buildQueryString($params));
     }
     
     /**
@@ -945,8 +945,8 @@ class phpnut {
      * @return array An array of associative arrays, each representing a single
      * user following $user_id
      */
-    public function getFollowers($user_id='me') {
-        return $this->httpReq('get',$this->_baseUrl.'users/'.$user_id.'/followers');
+    public function getFollowers($user_id='me', array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id).'/followers?'.$this->buildQueryString($params));
     }
     
     /**
