@@ -717,6 +717,27 @@ class phpnut {
     }
 
     /**
+     * Retrieve a list of "explore" streams
+     * @return An array of associative arrays, each representing a single explore stream.
+     */
+    public function getPostExploreStreams() {
+        return $this->httpReq('get',$this->_baseUrl.'posts/streams/explore');
+    }
+
+    /**
+     * Retrieve a list of posts from an "explore" stream on pnut.io.
+     * @param  string $slug [<description>]
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are:    count, before_id, since_id, include_muted, include_deleted,
+     * and include_post_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function getPostExploreStream(string $slug, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/streams/explore/' . urlencode($slug) . '?'.$this->buildQueryString($params));
+    }
+
+    /**
     * Bookmark a post
     * @param integer $post_id The post ID to bookmark
     */
