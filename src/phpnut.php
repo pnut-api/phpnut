@@ -900,7 +900,7 @@ class phpnut {
      * @param integer $user_id The user ID of the user to follow.
      * @return array An associative array representing the user you just followed.
      */
-    public function followUser(int $user_id) {
+    public function followUser($user_id) {
         return $this->httpReq('put',$this->_baseUrl.'users/'.urlencode($user_id).'/follow');
     }
 
@@ -910,7 +910,7 @@ class phpnut {
      * @param integer $user_id The user ID of the user to unfollow.
      * @return array An associative array representing the user you just unfollowed.
      */
-    public function unfollowUser(int $user_id) {
+    public function unfollowUser($user_id) {
         return $this->httpReq('delete',$this->_baseUrl.'users/'.urlencode($user_id).'/follow');
     }
 
