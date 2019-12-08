@@ -1213,6 +1213,16 @@ class phpnut {
      * @param $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
      */
     public function createMessage($channelid, array $data) {
+        if (isset($data['destinations'])) {
+            if (is_string($data['destinations'])) {
+                $data['destinations'] = explode(',',str_replace(' ',',',$data['destinations']));
+            }
+            foreach($data['destinations'] as $key=>$user) {
+                if (!is_numeric($user) && substr($user,0,1) !== '@') {
+                    $data['destinations'][$key] = '@' . $user;
+                }
+            }
+        }
         $json = json_encode($data);
         return $this->httpReq('post',$this->_baseUrl.'channels/'.$channelid.'/messages', $json, 'application/json');
     }
