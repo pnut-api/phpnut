@@ -1168,9 +1168,6 @@ class phpnut {
      * or false on error
      */
     public function searchChannels(array $params=[], string $query='', string $order='default') {
-        if (!is_array($params)) {
-            return false;
-        }
         if (!empty($query)) {
             $params['q'] = $query;
         }
