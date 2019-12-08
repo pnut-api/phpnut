@@ -1109,6 +1109,24 @@ class phpnut {
     }
 
     /**
+     * get an existing private message channel between multiple users
+     * @param mixed $users Can be a comma- or space-separated string, or an array.
+     * Usernames with @-symbol, or user ids.
+     */
+    public function getExistingPM($users, array $params=[]) {
+        if (is_string($users)) {
+            $users = explode(',',str_replace(' ',',',$users));
+        }
+        foreach($users as $key=>$user) {
+            if (!is_numeric($user) && substr($user,0,1) !== '@') {
+                $users[$key] = '@' . $user;
+            }
+        }
+        $params['ids'] = $users;
+        return $this->httpReq('get',$this->_baseUrl.'users/me/channels/existing_pm?'.$this->buildQueryString($params));
+    }
+
+    /**
      * get multiple channels' info by an array of channelids
      */
     public function getChannels(array $channels, array $params=[]) {
