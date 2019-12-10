@@ -1156,6 +1156,20 @@ class phpnut {
     }
 
     /**
+     * mute channelid
+     */
+    public function channelMute(int $channelid) {
+        return $this->httpReq('put',$this->_baseUrl.'channels/'.$channelid.'/mute');
+    }
+
+    /**
+     * unmute channelid
+     */
+    public function channelUnmute(int $channelid) {
+        return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid.'/mute');
+    }
+
+    /**
      * get all user objects subscribed to channelid
      */
     public function getChannelSubscriptions(int $channelid, array $params=[]) {
