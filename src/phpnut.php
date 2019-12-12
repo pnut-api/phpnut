@@ -1231,6 +1231,13 @@ class phpnut {
     }
 
     /**
+     * get a page of messages in channelid in a thread
+     */
+    public function getMessageThread(int $channelid, int $messageid, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid.'/thread?'.$this->buildQueryString($params));
+    }
+
+    /**
      * create message
      * @param $channelid numeric or "pm" for auto-chanenl (type=io.pnut.core.pm)
      * @param $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
