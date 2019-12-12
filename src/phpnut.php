@@ -1071,6 +1071,15 @@ class phpnut {
     }
 
     /**
+     * Returns a Client object
+     * @param string $client_id
+     * @return array An array representing the client
+     */
+    public function getClient(string $client_id, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'clients/'.urlencode($client_id).'?'.$this->buildQueryString($params));
+    }
+
+    /**
      * update stream marker
      */
     public function updateStreamMarker(array $data=[]) {
