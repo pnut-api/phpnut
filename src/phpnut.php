@@ -1080,6 +1080,15 @@ class phpnut {
     }
 
     /**
+     * Returns a list of truncated client details made by a user
+     * @param string $user_id
+     * @return array A list of arrays representing clients
+     */
+    public function getUserClients(string $user_id) {
+        return $this->httpReq('get',$this->_baseUrl.'users/'.urlencode($user_id).'/clients');
+    }
+
+    /**
      * update stream marker
      */
     public function updateStreamMarker(array $data=[]) {
