@@ -1248,10 +1248,11 @@ class phpnut {
 
     /**
      * create message
-     * @param $channelid numeric or "pm" for auto-chanenl (type=io.pnut.core.pm)
-     * @param $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
+     * @param $channelid numeric or "pm" for auto-channel (type=io.pnut.core.pm)
+     * @param array $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
+     * @param array $params query parameters
      */
-    public function createMessage($channelid, array $data) {
+    public function createMessage($channelid, array $data, array $params=[]) {
         if (isset($data['destinations'])) {
             if (is_string($data['destinations'])) {
                 $data['destinations'] = explode(',',str_replace(' ',',',$data['destinations']));
@@ -1263,7 +1264,7 @@ class phpnut {
             }
         }
         $json = json_encode($data);
-        return $this->httpReq('post',$this->_baseUrl.'channels/'.$channelid.'/messages', $json, 'application/json');
+        return $this->httpReq('post',$this->_baseUrl.'channels/'.$channelid.'/messages?'.$this->buildQueryString($params), $json, 'application/json');
     }
 
     /**
