@@ -277,35 +277,35 @@ class phpnut {
     }
     
     /**
-	 * Retrieve an app access token from the app.net API. This allows you
-	 * to access the API without going through the user access flow if you
-	 * just want to (eg) consume global. App access tokens are required for
-	 * some actions (like streaming global). DO NOT share the return value
-	 * of this function with any user (or save it in a cookie, etc). This
-	 * is considered secret info for your app only.
-	 * @return string The app access token
-	 */
-	public function getAppAccessToken() {
+     * Retrieve an app access token from the app.net API. This allows you
+     * to access the API without going through the user access flow if you
+     * just want to (eg) consume global. App access tokens are required for
+     * some actions (like streaming global). DO NOT share the return value
+     * of this function with any user (or save it in a cookie, etc). This
+     * is considered secret info for your app only.
+     * @return string The app access token
+     */
+    public function getAppAccessToken() {
         
         if (empty($this->_clientId) || empty($this->_clientSecret)) {
             throw new phpnutException('You must specify your pnut client ID and client secret');
         }
 
-		// construct the necessary elements to get a token
-		$data = [
-			'client_id'=>$this->_clientId,
-			'client_secret'=>$this->_clientSecret,
-			'grant_type'=>'client_credentials',
-		];
-		// try and fetch the token with the above data
-		$res = $this->httpReq('post',$this->_baseUrl.'oauth/access_token', $data);
-		// store it for later
-		$this->_appAccessToken = $res['access_token'];
-		$this->_accessToken = $res['access_token'];
-		$this->_username = null;
-		$this->_user_id = null;
-		return $this->_accessToken;
-	}
+        // construct the necessary elements to get a token
+        $data = [
+            'client_id'=>$this->_clientId,
+            'client_secret'=>$this->_clientSecret,
+            'grant_type'=>'client_credentials',
+        ];
+        // try and fetch the token with the above data
+        $res = $this->httpReq('post',$this->_baseUrl.'oauth/access_token', $data);
+        // store it for later
+        $this->_appAccessToken = $res['access_token'];
+        $this->_accessToken = $res['access_token'];
+        $this->_username = null;
+        $this->_user_id = null;
+        return $this->_accessToken;
+    }
 
     /**
      * Returns the total number of requests you're allowed within the
@@ -1058,7 +1058,11 @@ class phpnut {
      * @image path reference to image
      */
     protected function updateUserImage(string $which='avatar', $image) {
-        $data = array($which=>"@$image");
+        $test = @getimagesize($image);
+        if ($test && array_key_exists('mime',$test)) {
+            $mimeType = $test['mime'];
+        }
+        $data = array($which=>new CurlFile($image, $mimeType));
         return $this->httpReq('post-raw',$this->_baseUrl.'users/me/'.$which, $data, 'multipart/form-data');
     }
 
