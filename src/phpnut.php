@@ -1251,6 +1251,27 @@ class phpnut {
     }
 
     /**
+     * get a page of sticky messages in channelid
+     */
+    public function getStickyMessages(int $channelid, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/sticky_messages?'.$this->buildQueryString($params));
+    }
+
+    /**
+     * sticky messsage
+     */
+    public function stickyMessage(int $channelid, int $messageid) {
+        return $this->httpReq('put',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid.'/sticky');
+    }
+
+    /**
+     * unsticky messsage
+     */
+    public function unstickyMessage(int $channelid, int $messageid) {
+        return $this->httpReq('delete',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid.'/sticky');
+    }
+
+    /**
      * create message
      * @param $channelid numeric or "pm" for auto-channel (type=io.pnut.core.pm)
      * @param array $data array('text'=>'YOUR_MESSAGE') If a type=io.pnut.core.pm, then "destinations" key can be set to address as an array of people to send this PM too
