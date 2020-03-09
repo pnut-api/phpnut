@@ -1295,8 +1295,8 @@ class phpnut {
     /**
      * get message
      */
-    public function getMessage(int $channelid, int $messageid) {
-        return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid);
+    public function getMessage(int $channelid, int $messageid, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/messages/'.$messageid.'?'.$this->buildQueryString($params));
     }
 
     /**
