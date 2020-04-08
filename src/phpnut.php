@@ -705,6 +705,18 @@ class phpnut {
     }
 
     /**
+     * Get the currently authenticated user's recent messages
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are:    count, before_id, since_id, include_muted, include_deleted,
+     * and include_post_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function getUserMessages(array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'users/me/messages?'.$this->buildQueryString($params));
+    }
+
+    /**
      * Return the 20 most recent posts from the current User and
      * the Users they follow.
      * @param array $params An associative array of optional general parameters.
