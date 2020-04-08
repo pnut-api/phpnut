@@ -657,6 +657,20 @@ class phpnut {
     }
 
     /**
+     * Retrieve revisions of a post. Currently only one can be created.
+     * @param integer $post_id The ID of the post you want to retrieve previous revisions of.
+     * @param array $params An associative array of optional general parameters.
+     * This will likely change as the API evolves, as of this writing allowed keys
+     * are:    count, before_id, since_id, include_muted, include_deleted,
+     * and include_post_raw.
+     * @return An array of associative arrays, each representing a single post.
+     */
+    public function getPostRevisions(int $post_id, array $params=[]) {
+        return $this->httpReq('get',$this->_baseUrl.'posts/'.urlencode($post_id)
+                .'/revisions?'.$this->buildQueryString($params));
+    }
+
+    /**
      * Get the most recent Posts created by a specific User in reverse
      * chronological order (most recent first).
      * @param mixed $user_id Either the ID of the user you wish to retrieve posts by,
