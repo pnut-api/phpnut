@@ -1560,6 +1560,20 @@ class phpnut {
         return $this->httpReq('delete',$this->_baseUrl.'polls/'.urlencode($poll_id).'?'.$this->buildQueryString($params));
     }
 
+    /**
+     * List the polls that match a specific search term
+     * @param array $params a list of filter, search query, and general Poll parameters
+     * see: https://docs.pnut.io/resources/channels/search
+     * @param string $query The search query. Supports
+     * normal search terms.
+     * @return array An array of associative arrays, each representing one poll.
+     * or false on error
+     */
+    public function searchPolls(array $params=[], string $order='id') {
+        $params['order'] = $order;
+
+        return $this->httpReq('get', $this->_baseUrl . 'polls/search?' . $this->buildQueryString($params));
+    }
 
 
     /**
