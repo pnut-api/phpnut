@@ -86,7 +86,7 @@ class ezphpnut extends phpnut {
 
 		// if they want to stay logged in via a cookie, set the cookie
 		if ($token && $cookie) {
-			$cookie_lifetime = time()+(60*60*24*7);
+			$cookie_lifetime = time()+(60*60*24*7*$cookie);
 			setcookie('phpnutAccessToken',$token,$cookie_lifetime);
 		}
 
