@@ -620,6 +620,30 @@ class phpnut {
     }
 
     /**
+     * Create a new Post object. Mentions and hashtags will be parsed out of the
+     * post text, as will bare URLs. To create a link in a post without using a
+     * bare URL, include the anchor text in the post's text and include a link
+     * entity in the post creation call.
+     * @param integer $post_id The ID of the post to revise
+     * @param string $text The new text of the post
+     * @param array $data An associative array of optional post data. This
+     * will likely change as the API evolves, as of this writing allowed keys are:
+     * is_nsfw.
+     * @param array $params An associative array of optional data to be included
+     * in the URL (such as 'include_raw')
+     * @return array An associative array representing the post.
+     */
+    public function revisePost(int $post_id, string $text, array $data=[], array $params=[]) {
+        $data['text'] = $text;
+        $json = json_encode($data);
+        $qs = '';
+        if (!empty($params)) {
+            $qs = '?'.$this->buildQueryString($params);
+        }
+        return $this->httpReq('put',$this->_baseUrl.'posts/'.urlencode($post_id).$qs, $json, 'application/json');
+    }
+
+    /**
      * Returns a specific Post.
      * @param integer $post_id The ID of the post to retrieve
      * @param array $params An associative array of optional general parameters.
