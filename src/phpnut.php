@@ -1245,14 +1245,14 @@ class phpnut {
      * get all user objects subscribed to channelid
      */
     public function getChannelSubscriptions(int $channelid, array $params=[]) {
-        return $this->httpReq('get',$this->_baseUrl.'channel/'.$channelid.'/subscribers?'.$this->buildQueryString($params));
+        return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/subscribers?'.$this->buildQueryString($params));
     }
 
     /**
      * get all user IDs subscribed to channelid
      */
     public function getChannelSubscriptionsById(int $channelid) {
-        return $this->httpReq('get',$this->_baseUrl.'channel/'.$channelid.'/subscribers?include_user=0');
+        return $this->httpReq('get',$this->_baseUrl.'channels/'.$channelid.'/subscribers?include_user=0');
     }
     
     /**
