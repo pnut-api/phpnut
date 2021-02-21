@@ -1703,6 +1703,22 @@ class phpnut
     }
 
     /**
+     * Returns a list of Messages.
+     * @param array $message_ids The list of message IDs to retrieve
+     * @param array $params An associative array of optional general parameters.
+     * @return array An array of arrays representing the messages
+     */
+    public function getMultipleMessages(array $message_ids, array $params=[])
+    {
+        $params['ids'] = $message_ids;
+
+        return $this->httpReq(
+            'get',
+            $this->_baseUrl . 'channels/messages?' . $this->buildQueryString($params)
+        );
+    }
+
+    /**
      * delete messsage
      */
     public function deleteMessage(int $channelid, int $messageid)
