@@ -3,16 +3,16 @@
 // checking if the 'Remember me' checkbox was clicked
 if (isset($_GET['rem'])) {
 	session_start();
-	if ($_GET['rem']=='1') {
-		$_SESSION['rem']=1;
+	if ($_GET['rem'] === '1') {
+		$_SESSION['rem'] = 1;
 	} else {
 		unset($_SESSION['rem']);
 	}
 	header('Location: index.php');
 }
 
-require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/ez-settings.php';
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/ez-settings.php';
 
 $app = new EZphpnut();
 
@@ -51,7 +51,7 @@ if ($app->getSession()) {
 			exit;
 		}
 		catch (phpnutException $e) {
-			if ($e->getCode()==401) {
+			if ($e->getCode() === 401) {
 				print " success (could not get access)\n";
 			}
 			else {
@@ -64,7 +64,7 @@ if ($app->getSession()) {
 		print "<b>Attempting access again (this should work this time)...</b>";
 		print '<blockquote>';
 		$allowed = $app->getUser();
-		if (!$allowed || !isset($allowed['name']) || $allowed['name']!=$data['name']) {
+		if (!$allowed || !isset($allowed['name']) || $allowed['name'] !== $data['name']) {
 			print " error getting access again\n";
 			var_dump($allowed);
 			exit;
@@ -76,7 +76,7 @@ if ($app->getSession()) {
 		$sampleText = "Testing posting to pnut.io using phpnut - ".uniqid(mt_rand(0,100000));
 		$create = $app->createPost($sampleText);
 		// we should now have a post ID and the text should be the same as above
-		if (!$create || !$create['id'] || $create['text']!=$sampleText) {
+		if (!$create || !$create['id'] || $create['text'] !== $sampleText) {
 			print "Error posting sample text to pnut\n";
 			var_dump($create);
 			exit;
@@ -88,7 +88,7 @@ if ($app->getSession()) {
 		print "<b>Attempting to fetch sample post from pnut.io...</b>\n";
 		print "<blockquote>";
 		$get = $app->getPost($create['id']);
-		if (!$get || !$get['id'] || $get['id']!=$create['id'] || $get['text']!=$sampleText) {
+		if (!$get || !$get['id'] || $get['id']!=$create['id'] || $get['text'] !== $sampleText) {
 			print "Error fetching sample post from pnut:\n";
 			var_dump($get);
 			exit;
@@ -100,7 +100,7 @@ if ($app->getSession()) {
 		print "<b>Attempting to delete the sample post from pnut.io...</b>\n";
 		print "<blockquote>";
 		$delete = $app->deletePost($create['id']);
-		if (!$delete || !$delete['id'] || $delete['id']!=$create['id']) {
+		if (!$delete || !$delete['id'] || $delete['id'] !== $create['id']) {
 			print "Error deleting sample post from pnut:\n";
 			var_dump($delete);
 			exit;

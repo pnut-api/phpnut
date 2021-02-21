@@ -1,6 +1,6 @@
 {
     "name": "pnut-api/phpnut",
-    "version": "0.5.7",
+    "version": "1.0.0",
     "description": "Pnut API library",
     "keywords": ["library", "pnut"],
     "homepage": "https://github.com/pnut-api/phpnut",
@@ -14,7 +14,7 @@
         }
     ],
     "require": {
-        "php": ">=7.0.0"
+        "php": ">=8.0.0"
     },
     "autoload": {
         "psr-4": {

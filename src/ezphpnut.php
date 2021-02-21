@@ -27,17 +27,18 @@ ini_set('display_errors', 1);
 // comment this out if session is started elsewhere
 session_start();
 
-class ezphpnut extends phpnut {
-
+class ezphpnut extends phpnut
+{
 	private $_callbacks = [];
 	private $_autoShutdownStreams = [];
 
-	public function __construct($clientId=null,$clientSecret=null) {
+	public function __construct(?string $clientId=null, ?string $clientSecret=null)
+	{
 		// if client id wasn't passed, and it's in the settings.php file, use it from there
 		if (!$clientId && defined('PNUT_CLIENT_ID')) {
 
 			// if it's still the default, warn them
-			if (PNUT_CLIENT_ID == 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') {
+			if (PNUT_CLIENT_ID === 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') {
 				throw new phpnutException('You must change the values defined in ez-settings.php');
 			}
 
@@ -49,29 +50,30 @@ class ezphpnut extends phpnut {
 		parent::__construct($clientId,$clientSecret);
 
 		// set up ez streaming
-		$this->registerStreamFunction([$this,'streamEZCallback']);
+		$this->registerStreamFunction([$this, 'streamEZCallback']);
 
 		// make sure we cleanup/destroy any streams when we exit
-		register_shutdown_function([$this,'stopStreaming']);
+		register_shutdown_function([$this, 'stopStreaming']);
 	}
 
-	public function getAuthUrl($redirectUri=null,$scope=null) {
+	public function getAuthUrl(?string $redirectUri=null, ?string $scope=null)
+	{
 		if (is_null($redirectUri) && defined('PNUT_REDIRECT_URI')) {
 			$redirectUri = PNUT_REDIRECT_URI;
 		}
 		if (is_null($scope) && defined('PNUT_APP_SCOPE')) {
 			$scope = PNUT_APP_SCOPE;
 		}
-		return parent::getAuthUrl($redirectUri,$scope);
+		return parent::getAuthUrl($redirectUri, $scope);
 	}
 
 	// user login
-	public function setSession($cookie=0,$callback=null) {
-
+	public function setSession(int $cookie=0, ?string $callback=null)
+	{
 		if (!isset($callback) && defined('PNUT_REDIRECT_URI')) {
-			$cb=PNUT_REDIRECT_URI;
+			$cb = PNUT_REDIRECT_URI;
 		} else {
-			$cb=$callback;
+			$cb = $callback;
 		}
 
 		// try and set the token the original way (eg: if they're logging in)
@@ -82,28 +84,27 @@ class ezphpnut extends phpnut {
 			$token = $this->getSession();
 		}
 
-		$_SESSION['phpnutAccessToken']=$token;
+		$_SESSION['phpnutAccessToken'] = $token;
 
 		// if they want to stay logged in via a cookie, set the cookie
-		if ($token && $cookie) {
+		if ($token && $cookie !== 0) {
 			$cookie_lifetime = time()+(60*60*24*7*$cookie);
-			setcookie('phpnutAccessToken',$token,$cookie_lifetime);
+			setcookie('phpnutAccessToken', $token, $cookie_lifetime);
 		}
 
 		return $token;
 	}
 
 	// check if user is logged in
-	public function getSession() {
-
+	public function getSession(): false|string
+	{
 		// first check for cookie
-		if (isset($_COOKIE['phpnutAccessToken']) && $_COOKIE['phpnutAccessToken'] != 'expired') {
+		if (isset($_COOKIE['phpnutAccessToken']) && $_COOKIE['phpnutAccessToken'] !== 'expired') {
 			$this->setAccessToken($_COOKIE['phpnutAccessToken']);
 			return $_COOKIE['phpnutAccessToken'];
 		}
-
 		// else check the session for the token (from a previous page load)
-		else if (isset($_SESSION['phpnutAccessToken'])) {
+		elseif (isset($_SESSION['phpnutAccessToken'])) {
 			$this->setAccessToken($_SESSION['phpnutAccessToken']);
 			return $_SESSION['phpnutAccessToken'];
 		}
@@ -112,7 +113,8 @@ class ezphpnut extends phpnut {
 	}
 
 	// log the user out
-	public function deleteSession() {
+	public function deleteSession(): bool
+	{
 		// clear the session
 		unset($_SESSION['phpnutAccessToken']);
 
@@ -144,7 +146,8 @@ class ezphpnut extends phpnut {
 	 * @param string $type The type of even your callback would like to recieve.
 	 * At time of writing the possible options are 'post', 'bookmark', 'user_follow'.
 	 */
-	public function registerStreamCallback($type,$callback) {
+	public function registerStreamCallback(string $type, $callback)
+	{
 		switch ($type) {
 			case 'post':
 			case 'bookmark':
@@ -156,7 +159,7 @@ class ezphpnut extends phpnut {
 				return true;
 				break;
 			default:
-				throw new phpnutException('Unknown callback type: '.$type);
+				throw new phpnutException("Unknown callback type: {$type}");
 		}
 	}
 
@@ -175,7 +178,8 @@ class ezphpnut extends phpnut {
 	 * @see phpnutStream::createStream()
 	 * @see phpnutStream::openStream()
 	 */
-	public function startStreaming() {
+	public function startStreaming(): bool
+	{
 		// only listen for object types that we have registered callbacks for
 		if (!$this->_callbacks) {
 			throw new phpnutException('You must register at least one callback function before calling startStreaming');
@@ -205,7 +209,8 @@ class ezphpnut extends phpnut {
 	 * @see phpnutStream::deleteStream()
 	 * @see phpnutStream::closeStream()
 	 */
-	public function stopStreaming() {
+	public function stopStreaming(): bool
+	{
 		$this->closeStream();
 		// delete any auto streams
 		foreach ($this->_autoShutdownStreams as $streamId) {
@@ -217,12 +222,13 @@ class ezphpnut extends phpnut {
 	/**
 	 * Internal function used to make your streaming easier. I hope.
 	 */
-	protected function streamEZCallback($type,$data) {
+	protected function streamEZCallback($type, $data): void
+	{
 		// if there are defined callbacks for this object type, then...
-		if (array_key_exists($type,$this->_callbacks)) {
+		if (array_key_exists($type, $this->_callbacks)) {
 			// loop through the callbacks notifying each one in turn
 			foreach ($this->_callbacks[$type] as $callback) {
-				call_user_func($callback,$data);
+				call_user_func($callback, $data);
 			}
 		}
 	}
