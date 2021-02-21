@@ -2018,6 +2018,22 @@ class phpnut
     }
 
     /**
+     * Returns a list of Polls.
+     * @param array $poll_ids The list of poll IDs to retrieve
+     * @param array $params An associative array of optional general parameters.
+     * @return array An array of arrays representing the polls
+     */
+    public function getMultiplePolls(array $poll_ids, array $params=[])
+    {
+        $params['ids'] = $poll_ids;
+
+        return $this->httpReq(
+            'get',
+            $this->_baseUrl . 'polls?' . $this->buildQueryString($params)
+        );
+    }
+
+    /**
      * Returns a user's poll objects.
      * @param array $params An associative array of optional general parameters.
      * @return array An associative array representing the poll data.
