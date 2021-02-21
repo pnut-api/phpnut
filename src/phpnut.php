@@ -689,8 +689,6 @@ class phpnut
      * Returns a specific Post.
      * @param integer $post_id The ID of the post to retrieve
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are: include_raw.
      * @return array An associative array representing the post
      */
     public function getPost(int $post_id, array $params=[])
@@ -699,6 +697,22 @@ class phpnut
             'get',
             $this->_baseUrl . 'posts/' . urlencode($post_id) . '?'
                 . $this->buildQueryString($params)
+        );
+    }
+
+    /**
+     * Returns a list of Posts.
+     * @param array $post_ids The list of post IDs to retrieve
+     * @param array $params An associative array of optional general parameters.
+     * @return array An array of arrays representing the posts
+     */
+    public function getMultiplePosts(array $post_ids, array $params=[])
+    {
+        $params['ids'] = $post_ids;
+
+        return $this->httpReq(
+            'get',
+            $this->_baseUrl . 'posts?' . $this->buildQueryString($params)
         );
     }
 
