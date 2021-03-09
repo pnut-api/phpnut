@@ -734,9 +734,6 @@ class phpnut
      * Retrieve the Posts that are 'in reply to' a specific Post.
      * @param integer $post_id The ID of the post you want to retrieve replies for.
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getPostThread(int $post_id, array $params=[])
@@ -752,9 +749,6 @@ class phpnut
      * Retrieve revisions of a post. Currently only one can be created.
      * @param integer $post_id The ID of the post you want to retrieve previous revisions of.
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getPostRevisions(int $post_id, array $params=[])
@@ -773,9 +767,6 @@ class phpnut
      * or the string "me", which will retrieve posts for the user you're authenticated
      * as.
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getUserPosts(string|int $user_id='me', array $params=[])
@@ -794,9 +785,6 @@ class phpnut
      * the string "me", which will retrieve posts for the user you're authenticated
      * as.
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getUserMentions(string|int $user_id='me', array $params=[])
@@ -811,9 +799,6 @@ class phpnut
     /**
      * Get the currently authenticated user's recent messages
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getUserMessages(array $params=[])
@@ -829,9 +814,6 @@ class phpnut
      * Return the 20 most recent posts from the current User and
      * the Users they follow.
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getUserStream(array $params=[])
@@ -847,9 +829,6 @@ class phpnut
      * Retrieve a list of all public Posts on pnut.io, often referred to as the
      * global stream.
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getPublicPosts(array $params=[])
@@ -877,9 +856,6 @@ class phpnut
      * Retrieve a list of posts from an "explore" stream on pnut.io.
      * @param  string $slug [<description>]
      * @param array $params An associative array of optional general parameters.
-     * This will likely change as the API evolves, as of this writing allowed keys
-     * are:    count, before_id, since_id, include_muted, include_deleted,
-     * and include_post_raw.
      * @return An array of associative arrays, each representing a single post.
      */
     public function getPostExploreStream(string $slug, array $params=[])
