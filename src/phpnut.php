@@ -110,7 +110,9 @@ class phpnut
     public function __construct(?string $client_id_or_token=null, ?string $client_secret=null)
     {
         if (!$client_id_or_token) {
-            if (defined('PNUT_ACCESS_TOKEN')) {
+            if (isset($_ENV['PNUT_ACCESS_TOKEN'])) {
+                $client_id_or_token = $_ENV['PNUT_ACCESS_TOKEN'];
+            } elseif (defined('PNUT_ACCESS_TOKEN')) {
                 $client_id_or_token = PNUT_ACCESS_TOKEN;
             } elseif (defined('PNUT_CLIENT_ID') && defined('PNUT_CLIENT_SECRET')) {
                 $client_id_or_token = PNUT_CLIENT_ID;
@@ -157,14 +159,37 @@ class phpnut
      * after authenticating with pnut.io. This must be one of the URIs
      * allowed by your pnut.io application settings.
      * @param array $scope An array of scopes (permissions) you wish to obtain
-     * from the user. Currently options are stream, email, write_post, follow,
-     * messages, and export. If you don't specify anything, you'll only receive
+     * from the user. If you don't specify anything, you'll only receive
      * access to the user's basic profile (the default).
      */
-    public function getAuthUrl(string $callback_uri, ?array $scope=null): string
+    public function getAuthUrl(?string $callback_uri=null, array|string|null $scope=null): string
     {
         if (empty($this->_clientId)) {
             throw new phpnutException('You must specify your pnut client ID');
+        }
+
+        if (is_null($callback_uri)) {
+            if (defined('PNUT_REDIRECT_URI')) {
+                $callback_uri = PNUT_REDIRECT_URI;
+            } elseif (isset($_ENV['PNUT_REDIRECT_URI'])) {
+                $callback_uri = $_ENV['PNUT_REDIRECT_URI'];
+            } else {
+                throw new phpnutException('You must specify your pnut callback URI');
+            }
+        }
+
+        if (is_null($scope)) {
+            if (defined('PNUT_APP_SCOPE')) {
+                $scope = PNUT_APP_SCOPE;
+            } elseif (isset($_ENV['PNUT_APP_SCOPE'])) {
+                $scope = $_ENV['PNUT_APP_SCOPE'];
+            } else {
+                $scope = 'basic';
+            }
+        }
+
+        if (is_array($scope)) {
+            $scope = implode(',', $scope);
         }
 
         // construct an authorization url based on our client id and other data
@@ -172,6 +197,7 @@ class phpnut
             'client_id'=>$this->_clientId,
             'response_type'=>'code',
             'redirect_uri'=>$callback_uri,
+            'scope'=>$scope,
         ];
 
         $url = $this->_authUrl;
@@ -181,14 +207,6 @@ class phpnut
             $url .= 'authenticate?';
         }
         $url .= $this->buildQueryString($data);
-
-        if ($scope) {
-            if (is_array($scope)) {
-                $url .= '&scope=' . implode(',', $scope);
-            } else {
-                $url .= '&scope=' . $scope;
-            }
-        }
 
         // return the constructed url
         return $url;

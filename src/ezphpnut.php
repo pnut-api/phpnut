@@ -32,22 +32,22 @@ class ezphpnut extends phpnut
 	private $_callbacks = [];
 	private $_autoShutdownStreams = [];
 
-	public function __construct(?string $clientId=null, ?string $clientSecret=null)
+	public function __construct(?string $client_id=null, ?string $client_secret=null)
 	{
 		// if client id wasn't passed, and it's in the settings.php file, use it from there
-		if (!$clientId && defined('PNUT_CLIENT_ID')) {
+		if (!$client_id && defined('PNUT_CLIENT_ID')) {
 
 			// if it's still the default, warn them
 			if (PNUT_CLIENT_ID === 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX') {
 				throw new phpnutException('You must change the values defined in ez-settings.php');
 			}
 
-			$clientId = PNUT_CLIENT_ID;
-			$clientSecret = PNUT_CLIENT_SECRET;
+			$client_id = PNUT_CLIENT_ID;
+			$client_secret = PNUT_CLIENT_SECRET;
 		}
 
 		// call the parent with the variables we have
-		parent::__construct($clientId,$clientSecret);
+		parent::__construct($client_id, $client_secret);
 
 		// set up ez streaming
 		$this->registerStreamFunction([$this, 'streamEZCallback']);
@@ -56,15 +56,10 @@ class ezphpnut extends phpnut
 		register_shutdown_function([$this, 'stopStreaming']);
 	}
 
-	public function getAuthUrl(?string $redirectUri=null, ?string $scope=null): string
+	public function getAuthUrl(?string $callback_uri=null, array|string|null $scope=null): string
 	{
-		if (is_null($redirectUri) && defined('PNUT_REDIRECT_URI')) {
-			$redirectUri = PNUT_REDIRECT_URI;
-		}
-		if (is_null($scope) && defined('PNUT_APP_SCOPE')) {
-			$scope = PNUT_APP_SCOPE;
-		}
-		return parent::getAuthUrl($redirectUri, $scope);
+		// retained for compatibility
+		return parent::getAuthUrl($callback_uri, $scope);
 	}
 
 	// user login
