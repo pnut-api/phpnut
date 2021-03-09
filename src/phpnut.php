@@ -1564,6 +1564,33 @@ class phpnut
             "{$this->_baseUrl}channels/{$channelid}/subscribers?include_user=0"
         );
     }
+
+    /**
+     * Retrieve a list of "explore" streams
+     * @return An array of associative arrays, each representing a single explore stream.
+     */
+    public function getChannelExploreStreams()
+    {
+        return $this->httpReq(
+            'get',
+            $this->_baseUrl . 'channels/streams/explore'
+        );
+    }
+
+    /**
+     * Retrieve a list of channels from an "explore" stream on pnut.io.
+     * @param  string $slug [<description>]
+     * @param array $params An associative array of optional general parameters.
+     * @return An array of associative arrays, each representing a single channel.
+     */
+    public function getChannelExploreStream(string $slug, array $params=[])
+    {
+        return $this->httpReq(
+            'get',
+            $this->_baseUrl . 'channels/streams/explore/' . urlencode($slug) . '?'
+                . $this->buildQueryString($params)
+        );
+    }
     
     /**
      * mark channel inactive
