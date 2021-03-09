@@ -56,7 +56,7 @@ class ezphpnut extends phpnut
 		register_shutdown_function([$this, 'stopStreaming']);
 	}
 
-	public function getAuthUrl(?string $redirectUri=null, ?string $scope=null)
+	public function getAuthUrl(?string $redirectUri=null, ?string $scope=null): string
 	{
 		if (is_null($redirectUri) && defined('PNUT_REDIRECT_URI')) {
 			$redirectUri = PNUT_REDIRECT_URI;

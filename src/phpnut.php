@@ -1305,10 +1305,10 @@ class phpnut
 
     /**
      * Update a user image
-     * @which avatar|cover
      * @image path reference to image
+     * @which avatar|cover
      */
-    protected function updateUserImage(string $which='avatar', $image)
+    protected function updateUserImage(string $image, string $which='avatar')
     {
         $test = @getimagesize($image);
         if ($test && array_key_exists('mime', $test)) {
