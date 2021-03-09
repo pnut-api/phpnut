@@ -247,7 +247,7 @@ For individual help, ask questions in the [Developer chat](https://patter.chat/1
 
 ## Prerequisites
 
-* PHP >= 7.0
+* PHP >= 8.0
 
 
 ## Contributors
