@@ -288,7 +288,7 @@ class phpnut
      * @param string $token A valid access token you're previously received
      * from calling getAccessToken().
      */
-    public function setAccessToken(string $token): void
+    public function setAccessToken(?string $token=null): void
     {
         $this->_accessToken = $token;
     }
