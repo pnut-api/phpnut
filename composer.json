@@ -1,6 +1,6 @@
 {
     "name": "pnut-api/phpnut",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Pnut API library",
     "keywords": ["library", "pnut"],
     "homepage": "https://github.com/pnut-api/phpnut",
